@@ -1,7 +1,7 @@
 import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
 import { UserRole } from '../enums/user-role.enum';
 
-@Entity({ name: 'users', synchronize: false })
+@Entity({ name: 'users', synchronize: true })
 export class Users {
   @PrimaryGeneratedColumn('uuid')
   id: string;
@@ -14,6 +14,9 @@ export class Users {
 
   @Column()
   password: string;
+
+  @Column()
+  phone: number;
 
   @Column({
     type: 'varchar',

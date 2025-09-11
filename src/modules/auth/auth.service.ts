@@ -14,6 +14,7 @@ import { registerDTO } from './dto/register.dto';
 import { UserService } from '../user/user.service';
 import { Users } from '../user/entities/users.entity';
 import { UserRole } from '../user/enums/user-role.enum';
+import { UserDto } from '../user/dto/user.dto';
 
 @Injectable()
 export class AuthService {
@@ -66,11 +67,12 @@ export class AuthService {
     });
     return { accessToken };
   }
-  // async register(dto: registerDTO) {
-  //   const createRegister = await this.userService.create({
-  //     ...dto,
-  //     role: UserRole.CUSTOMER,
-  //   });
-  //   return createRegister;
-  // }
+  async register(dto: registerDTO) {
+    const data: UserDto = {
+      ...dto,
+      role: UserRole.CUSTOMER,
+    };
+    const createRegister = await this.userService.create(data);
+    return createRegister;
+  }
 }
