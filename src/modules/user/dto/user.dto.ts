@@ -2,6 +2,7 @@ import { ApiProperty } from '@nestjs/swagger';
 import {
   IsEmail,
   IsEnum,
+  IsNumber,
   IsOptional,
   IsString,
   MinLength,
@@ -31,6 +32,9 @@ export class UserDto {
   @IsString()
   @MinLength(6, { message: 'Password (Minimum 6 characters)' })
   password: string;
+
+  @IsNumber()
+  phone: number;
 
   @ApiProperty({ enum: UserRole, default: UserRole.CUSTOMER })
   @IsEnum(UserRole)
