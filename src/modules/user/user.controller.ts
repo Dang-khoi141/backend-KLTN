@@ -15,7 +15,7 @@ import { Users } from './entities/users.entity';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { JwtAuthGuard } from '../auth/guards/jwt.guard';
 import { UserRole } from './enums/user-role.enum';
-import { Roles } from '../common/decorator/roles.decorator';
+import { Roles } from '../common/decorators/roles.decorator';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { UpdateAdminUserDto } from './dto/update-admin-user.dto';
 

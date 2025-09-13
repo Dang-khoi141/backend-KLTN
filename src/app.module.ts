@@ -1,17 +1,37 @@
-import { Module } from '@nestjs/common';
+import { ClassSerializerInterceptor, Module } from '@nestjs/common';
+import { APP_INTERCEPTOR } from '@nestjs/core/constants';
+import { TypeOrmModule } from '@nestjs/typeorm';
+
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-import { UserModule } from './modules/user/user.module';
-import { TypeOrmModule } from '@nestjs/typeorm';
 import { dataSourceOptions } from './db/data-source';
 import { AuthModule } from './modules/auth/auth.module';
 import { CatalogModule } from './modules/catalog/catalog.module';
-import { ShoppingModule } from './modules/shopping/shopping.module';
 import { InventoryModule } from './modules/inventory/inventory.module';
+import { ShoppingModule } from './modules/shopping/shopping.module';
+import { UserModule } from './modules/user/user.module';
+import { TransformInterceptor } from './modules/common/interceptors/message-response.interceptor';
 
 @Module({
-  imports: [TypeOrmModule.forRoot(dataSourceOptions), UserModule, AuthModule, CatalogModule, ShoppingModule, InventoryModule],
+  imports: [
+    TypeOrmModule.forRoot(dataSourceOptions),
+    UserModule,
+    AuthModule,
+    CatalogModule,
+    ShoppingModule,
+    InventoryModule,
+  ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [
+    AppService,
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: ClassSerializerInterceptor,
+    },
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: TransformInterceptor,
+    },
+  ],
 })
 export class AppModule {}
