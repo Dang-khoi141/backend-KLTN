@@ -5,6 +5,7 @@ import {
   IsNumber,
   IsOptional,
   IsString,
+  Length,
   MinLength,
 } from 'class-validator';
 import { UserRole } from '../enums/user-role.enum';
@@ -33,8 +34,9 @@ export class UserDto {
   @MinLength(6, { message: 'Password (Minimum 6 characters)' })
   password: string;
 
-  @IsNumber()
-  phone: number;
+  @IsString()
+  @Length(10, 11, { message: 'Phone must be 10-11 digits' })
+  phone: string;
 
   @ApiProperty({ enum: UserRole, default: UserRole.CUSTOMER })
   @IsEnum(UserRole)

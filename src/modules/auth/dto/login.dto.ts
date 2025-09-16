@@ -10,6 +10,6 @@ export class loginDTO {
   @ApiProperty()
   @IsNotEmpty()
   @IsString()
-  @MinLength(10)
+  @MinLength(6)
   password: string;
 }

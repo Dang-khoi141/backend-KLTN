@@ -4,6 +4,7 @@ import {
   IsEnum,
   IsOptional,
   IsString,
+  Length,
   MinLength,
 } from 'class-validator';
 import { UserRole } from '../enums/user-role.enum';
@@ -22,6 +23,10 @@ export class UpdateAdminUserDto {
   })
   @IsEmail({})
   email: string;
+
+  @IsString()
+  @Length(10, 11, { message: 'Phone must be 10-11 digits' })
+  phone: string;
 
   @ApiProperty({
     example: 'strongPassword123',
