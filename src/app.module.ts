@@ -10,11 +10,8 @@ import { InventoryModule } from './modules/inventory/inventory.module';
 import { ShoppingModule } from './modules/shopping/shopping.module';
 import { UserModule } from './modules/user/user.module';
 import { TransformInterceptor } from './modules/common/interceptors/message-response.interceptor';
-import { OtpModule } from './modules/otp/otp.module';
-
-import { BrandModule } from './modules/catalog/brand/brand.module';
-import { CategoryModule } from './modules/catalog/category/category.module';
-import { ProductModule } from './modules/catalog/product/product.module';
+import { OtpModule } from './modules/auth/otp/otp.module';
+import { CatalogModule } from './modules/catalog/catalog.module';
 
 @Module({
   imports: [
@@ -24,9 +21,7 @@ import { ProductModule } from './modules/catalog/product/product.module';
     ShoppingModule,
     InventoryModule,
     OtpModule,
-    ProductModule,
-    BrandModule,
-    CategoryModule,
+    CatalogModule,
   ],
   controllers: [AppController],
   providers: [

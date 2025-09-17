@@ -15,7 +15,7 @@ import { UserService } from '../user/user.service';
 import { Users } from '../user/entities/users.entity';
 import { UserRole } from '../user/enums/user-role.enum';
 import { UserDto } from '../user/dto/user.dto';
-import { OtpService } from '../otp/otp.service';
+import { OtpService } from './otp/otp.service';
 
 @Injectable()
 export class AuthService {
@@ -70,7 +70,6 @@ export class AuthService {
     return { accessToken };
   }
   async register(dto: registerDTO) {
-
     const isValidOtp = this.otpService.verifyOtp(dto.email, dto.otp);
 
     if (!isValidOtp) {

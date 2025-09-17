@@ -8,7 +8,7 @@ import {
   Patch,
   Delete,
 } from '@nestjs/common';
-import { BrandService } from './brand.service';
+import { BrandService } from '../services/brand.service';
 import { UpdateBrandDto } from '../dto/update-brand.dto';
 import { CreateBrandDto } from '../dto/create-brand.dto';
 

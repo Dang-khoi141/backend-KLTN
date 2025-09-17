@@ -7,7 +7,7 @@ import { JwtModule } from '@nestjs/jwt';
 import { JwtStrategy } from './strategies/jwt.strategy';
 import { UserModule } from '../user/user.module';
 import { ConfigModule } from '@nestjs/config';
-import { OtpModule } from '../otp/otp.module';
+import { OtpModule } from './otp/otp.module';
 
 @Module({
   imports: [
