@@ -7,6 +7,7 @@ import {
   Param,
   Patch,
   Post,
+  Req,
   UploadedFile,
   UseGuards,
   UseInterceptors,
@@ -86,5 +87,13 @@ export class UserController {
       throw new NotFoundException(`User with email ${email} not found`);
     }
     return user;
+  }
+
+  @Patch('change-password')
+  @UseGuards(JwtAuthGuard)
+  async changePassword(@Req() req, @Body('newPassword') newPassword: string) {
+    const email = req.user.email;
+    await this.userService.updatePassword(email, newPassword);
+    return { message: 'Password updated successfully' };
   }
 }

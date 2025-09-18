@@ -1,16 +1,16 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, BadRequestException } from '@nestjs/common';
 import * as nodemailer from 'nodemailer';
 import { randomInt } from 'crypto';
-import * as dotenv from 'dotenv';
-
-dotenv.config();
+import * as bcrypt from 'bcrypt';
+import { UserService } from '../../user/user.service';
+import { ResetPasswordDto } from './entities/reset-password.dto';
 
 @Injectable()
 export class OtpService {
   private readonly emailTransporter;
   private otpStore = new Map<string, string>();
 
-  constructor() {
+  constructor(private readonly userService: UserService) {
     this.emailTransporter = nodemailer.createTransport({
       host: process.env.EMAIL_HOST,
       port: Number(process.env.EMAIL_PORT),
@@ -23,8 +23,7 @@ export class OtpService {
   }
 
   private generateOtp(): string {
-    const otp = randomInt(100000, 999999).toString();
-    return otp;
+    return randomInt(100000, 999999).toString();
   }
 
   async sendOtpToEmail(email: string): Promise<string> {
@@ -46,17 +45,31 @@ export class OtpService {
     }
   }
 
-  async sendOtp(email: string): Promise<{ otp: string }> {
+  async sendOtp(email: string): Promise<{ message: string }> {
     const otp = await this.sendOtpToEmail(email);
     this.otpStore.set(email, otp);
+
     setTimeout(() => this.otpStore.delete(email), 5 * 60 * 1000);
 
-    return { otp };
+    return { message: 'OTP sent successfully' };
   }
 
   verifyOtp(email: string, otp: string): boolean {
     const storedOtp = this.otpStore.get(email);
-    const isValid = storedOtp === otp;
-    return isValid;
+    return storedOtp === otp;
+  }
+
+  async resetPassword(dto: ResetPasswordDto): Promise<{ message: string }> {
+    const isValid = this.verifyOtp(dto.email, dto.otp);
+    if (!isValid) {
+      throw new BadRequestException('Invalid or expired OTP');
+    }
+
+    const hashedPassword = await bcrypt.hash(dto.newPassword, 10);
+    await this.userService.updatePassword(dto.email, hashedPassword);
+
+    this.otpStore.delete(dto.email);
+
+    return { message: 'Password reset successfully' };
   }
 }

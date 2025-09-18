@@ -78,4 +78,13 @@ export class UserService {
       where: { email },
     });
   }
+
+  async updatePassword(email: string, hashedPassword: string): Promise<void> {
+    const user = await this.findByEmail(email);
+    if (!user) {
+      throw new NotFoundException(`User with email ${email} not found`);
+    }
+    user.password = hashedPassword;
+    await this.userRepository.save(user);
+  }
 }
