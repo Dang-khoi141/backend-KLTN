@@ -83,7 +83,6 @@ export class AuthService {
 
     data.password = await bcrypt.hash(dto.password, 10);
 
-    const createRegister = await this.userService.create(data);
-    return createRegister;
+    return this.userService.create(data);
   }
 }

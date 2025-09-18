@@ -7,7 +7,9 @@ import {
   Param,
   Patch,
   Post,
+  UploadedFile,
   UseGuards,
+  UseInterceptors,
 } from '@nestjs/common';
 import { UserService } from './user.service';
 import { UserDto } from './dto/user.dto';
@@ -18,6 +20,7 @@ import { UserRole } from './enums/user-role.enum';
 import { Roles } from '../common/decorators/roles.decorator';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { UpdateAdminUserDto } from './dto/update-admin-user.dto';
+import { FileInterceptor } from '@nestjs/platform-express';
 
 @Controller({
   path: 'users',
@@ -29,8 +32,12 @@ export class UserController {
 
   @Post()
   @Roles(UserRole.SUPERADMIN)
-  async create(@Body() createUserDto: UserDto): Promise<Users> {
-    return this.userService.create(createUserDto);
+  @UseInterceptors(FileInterceptor('file'))
+  async create(
+    @Body() createUserDto: UserDto,
+    @UploadedFile() file?: Express.Multer.File,
+  ): Promise<Users> {
+    return this.userService.create(createUserDto, file);
   }
   @Get('')
   @Roles(UserRole.ADMIN, UserRole.SUPERADMIN)

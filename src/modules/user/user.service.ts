@@ -11,22 +11,31 @@ import { UserDto } from './dto/user.dto';
 import { Users } from './entities/users.entity';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { UpdateAdminUserDto } from './dto/update-admin-user.dto';
+import { S3Service } from '../uploads/upload.service';
 
 @Injectable()
 export class UserService {
   constructor(
     @InjectRepository(Users)
     private readonly userRepository: Repository<Users>,
+    private readonly s3Service: S3Service,
   ) {}
-  async create(UserDto: UserDto) {
+  async create(userDto: UserDto, file?: Express.Multer.File) {
     const checkemail = await this.userRepository.findOneBy({
-      email: UserDto.email,
+      email: userDto.email,
     });
     if (checkemail) {
       throw new ConflictException('Email already in use');
     }
-    const user = this.userRepository.create(UserDto);
+
+    const user = this.userRepository.create(userDto);
     user.password = await bcrypt.hash(user.password, 10);
+
+    if (file) {
+      const avatarUrl = await this.s3Service.uploadFile(file, 'users');
+      user.avatar = avatarUrl;
+    }
+
     return this.userRepository.save(user);
   }
 

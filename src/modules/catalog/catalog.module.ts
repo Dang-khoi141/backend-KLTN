@@ -11,9 +11,10 @@ import { BrandService } from './services/brand.service';
 import { ProductService } from './services/product.service';
 import { ProductController } from './controllers/product.controller';
 import { BrandController } from './controllers/brand.controller';
+import { UploadModule } from '../uploads/upload.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Category, Brand, Product])],
+  imports: [TypeOrmModule.forFeature([Category, Brand, Product]), UploadModule],
   providers: [CategoryService, BrandService, ProductService],
   controllers: [CategoryController, BrandController, ProductController],
 })

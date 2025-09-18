@@ -12,6 +12,7 @@ import { UserModule } from './modules/user/user.module';
 import { TransformInterceptor } from './modules/common/interceptors/message-response.interceptor';
 import { OtpModule } from './modules/auth/otp/otp.module';
 import { CatalogModule } from './modules/catalog/catalog.module';
+import { UploadModule } from './modules/uploads/upload.module';
 
 @Module({
   imports: [
@@ -22,6 +23,7 @@ import { CatalogModule } from './modules/catalog/catalog.module';
     InventoryModule,
     OtpModule,
     CatalogModule,
+    UploadModule,
   ],
   controllers: [AppController],
   providers: [

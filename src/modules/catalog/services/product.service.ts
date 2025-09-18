@@ -4,16 +4,27 @@ import { Repository } from 'typeorm';
 import { Product } from '../entities/product.entity';
 import { CreateProductDto } from '../dto/create-product.dto';
 import { UpdateProductDto } from '../dto/update-product.dto';
+import { S3Service } from '../../uploads/upload.service';
 
 @Injectable()
 export class ProductService {
   constructor(
     @InjectRepository(Product)
     private productRepo: Repository<Product>,
+    private readonly s3Service: S3Service,
   ) {}
 
-  async create(dto: CreateProductDto): Promise<Product> {
+  async create(
+    dto: CreateProductDto,
+    file?: Express.Multer.File,
+  ): Promise<Product> {
     const product = this.productRepo.create(dto);
+
+    if (file) {
+      const imageUrl = await this.s3Service.uploadFile(file, 'products');
+      product.image = imageUrl;
+    }
+
     return this.productRepo.save(product);
   }
 
@@ -32,9 +43,19 @@ export class ProductService {
     return product;
   }
 
-  async update(id: string, dto: UpdateProductDto): Promise<Product> {
+  async update(
+    id: string,
+    dto: UpdateProductDto,
+    file?: Express.Multer.File,
+  ): Promise<Product> {
     const product = await this.findOne(id);
     Object.assign(product, dto);
+
+    if (file) {
+      const imageUrl = await this.s3Service.uploadFile(file, 'products');
+      product.image = imageUrl;
+    }
+
     return this.productRepo.save(product);
   }
 
