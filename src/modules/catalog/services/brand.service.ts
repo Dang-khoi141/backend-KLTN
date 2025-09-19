@@ -1,39 +1,105 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { Brand } from '../entities/brand.entity';
 import { CreateBrandDto } from '../dto/create-brand.dto';
 import { UpdateBrandDto } from '../dto/update-brand.dto';
+import { Brand } from '../entities/brand.entity';
 
 @Injectable()
 export class BrandService {
   constructor(
     @InjectRepository(Brand)
-    private brandRepo: Repository<Brand>,
+    private brandRepository: Repository<Brand>,
   ) {}
 
   async create(dto: CreateBrandDto): Promise<Brand> {
-    const brand = this.brandRepo.create(dto);
-    return this.brandRepo.save(brand);
+    const existingBrand = await this.brandRepository.findOne({
+      where: { name: dto.name },
+    });
+
+    if (existingBrand) {
+      throw new BadRequestException('Brand name already exists');
+    }
+
+    const brand = this.brandRepository.create(dto);
+    return this.brandRepository.save(brand);
   }
 
-  async findAll(): Promise<Brand[]> {
-    return this.brandRepo.find();
+  async findOrCreateDefault(): Promise<Brand> {
+    let brand = await this.brandRepository.findOne({
+      where: { name: 'No Brand' },
+    });
+    if (!brand) {
+      brand = this.brandRepository.create({
+        name: 'No Brand',
+        description: 'Default brand',
+      });
+      await this.brandRepository.save(brand);
+    }
+    return brand;
   }
 
-  async findOne(id: string): Promise<Brand> {
-    const brand = await this.brandRepo.findOne({ where: { id } });
-    if (!brand) throw new NotFoundException('Brand not found');
+  async findAll(includeProducts = false): Promise<Brand[]> {
+    const relations = includeProducts ? ['products'] : [];
+
+    return this.brandRepository.find({
+      relations,
+      order: { name: 'ASC' },
+    });
+  }
+
+  async findOne(id: string, includeProducts = false): Promise<Brand> {
+    const relations = includeProducts ? ['products'] : [];
+
+    const brand = await this.brandRepository.findOne({
+      where: { id },
+      relations,
+    });
+
+    if (!brand) {
+      throw new NotFoundException(`Brand with ID ${id} not found`);
+    }
+
     return brand;
   }
 
   async update(id: string, dto: UpdateBrandDto): Promise<Brand> {
     const brand = await this.findOne(id);
+
+    if (dto.name && dto.name !== brand.name) {
+      const existingBrand = await this.brandRepository.findOne({
+        where: { name: dto.name },
+      });
+
+      if (existingBrand) {
+        throw new BadRequestException('Brand name already exists');
+      }
+    }
+
     Object.assign(brand, dto);
-    return this.brandRepo.save(brand);
+    return this.brandRepository.save(brand);
   }
 
   async remove(id: string): Promise<void> {
-    await this.brandRepo.delete(id);
+    const brand = await this.brandRepository.findOne({
+      where: { id },
+      relations: ['products'],
+    });
+
+    if (!brand) {
+      throw new NotFoundException(`Brand with ID ${id} not found`);
+    }
+
+    if (brand.products && brand.products.length > 0) {
+      throw new BadRequestException(
+        'Cannot delete brand with associated products',
+      );
+    }
+
+    await this.brandRepository.delete(id);
   }
 }

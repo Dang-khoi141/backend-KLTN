@@ -1,15 +1,20 @@
 import {
-  Entity,
-  PrimaryGeneratedColumn,
   Column,
   CreateDateColumn,
-  UpdateDateColumn,
+  Entity,
+  Index,
+  JoinColumn,
   ManyToOne,
+  PrimaryGeneratedColumn,
+  UpdateDateColumn,
 } from 'typeorm';
-import { Category } from './category.entity';
 import { Brand } from './brand.entity';
+import { Category } from './category.entity';
 
-@Entity({ name: 'products', synchronize: true })
+@Entity({ name: 'products' })
+@Index(['name'])
+@Index(['price'])
+@Index(['isActive'])
 export class Product {
   @PrimaryGeneratedColumn('uuid')
   id: string;
@@ -23,21 +28,29 @@ export class Product {
   @Column({ length: 500, nullable: true })
   description?: string;
 
-  @Column({ length: 255 })
-  image: string;
+  @Column({ nullable: true })
+  image?: string;
 
-  @Column({ default: true })
-  is_active: boolean;
+  @Column({ name: 'is_active', default: true })
+  isActive: boolean;
 
-  @CreateDateColumn()
-  created_at: Date;
-
-  @UpdateDateColumn()
-  updated_at: Date;
-
-  @ManyToOne(() => Category, (category) => category.products)
+  @ManyToOne(() => Category, (category) => category.products, {
+    nullable: false,
+    onDelete: 'RESTRICT',
+  })
+  @JoinColumn({ name: 'category_id' })
   category: Category;
 
-  @ManyToOne(() => Brand, (brand) => brand.products)
+  @ManyToOne(() => Brand, (brand) => brand.products, {
+    nullable: false,
+    onDelete: 'RESTRICT',
+  })
+  @JoinColumn({ name: 'brand_id' })
   brand: Brand;
+
+  @CreateDateColumn({ name: 'created_at' })
+  createdAt: Date;
+
+  @UpdateDateColumn({ name: 'updated_at' })
+  updatedAt: Date;
 }

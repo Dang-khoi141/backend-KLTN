@@ -1,42 +1,73 @@
 import {
-  Controller,
-  Get,
-  Post,
   Body,
-  Param,
-  Patch,
+  Controller,
   Delete,
+  Get,
+  Param,
+  ParseUUIDPipe,
+  Patch,
+  Post,
+  Query,
 } from '@nestjs/common';
-import { CategoryService } from '../services/category.service';
+import { ApiBody, ApiQuery, ApiTags } from '@nestjs/swagger';
+import { ResponseMessage } from 'src/modules/common/decorators/response-message.decorator';
 import { CreateCategoryDto } from '../dto/create-category.dto';
 import { UpdateCategoryDto } from '../dto/update-category.dto';
+import { CategoryService } from '../services/category.service';
 
+@ApiTags('Categories')
 @Controller('categories')
 export class CategoryController {
   constructor(private readonly categoryService: CategoryService) {}
 
   @Post()
+  @ResponseMessage('Category created successfully')
+  @ApiBody({ type: CreateCategoryDto })
   create(@Body() dto: CreateCategoryDto) {
     return this.categoryService.create(dto);
   }
 
   @Get()
-  findAll() {
-    return this.categoryService.findAll();
+  @ResponseMessage('Categories retrieved successfully')
+  @ApiQuery({ name: 'includeChildren', required: false, type: Boolean })
+  findAll(@Query('includeChildren') includeChildren?: string) {
+    return this.categoryService.findAll(includeChildren === 'true');
   }
 
+  // @Get('tree')
+  // getTree() {
+  //   return this.categoryService.getTree();
+  // }
+
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.categoryService.findOne(id);
+  @ResponseMessage('Category retrieved successfully')
+  @ApiQuery({ name: 'includeRelations', required: false, type: Boolean })
+  findOne(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Query('includeRelations') includeRelations?: string,
+  ) {
+    return this.categoryService.findOne(id, includeRelations === 'true');
+  }
+
+  @Get(':id/path')
+  @ResponseMessage('Category path retrieved successfully')
+  getPath(@Param('id', ParseUUIDPipe) id: string) {
+    return this.categoryService.getPath(id);
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() dto: UpdateCategoryDto) {
+  @ResponseMessage('Category updated successfully')
+  @ApiBody({ type: UpdateCategoryDto })
+  update(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: UpdateCategoryDto,
+  ) {
     return this.categoryService.update(id, dto);
   }
 
   @Delete(':id')
-  remove(@Param('id') id: string) {
+  @ResponseMessage('Category deleted successfully')
+  remove(@Param('id', ParseUUIDPipe) id: string) {
     return this.categoryService.remove(id);
   }
 }
