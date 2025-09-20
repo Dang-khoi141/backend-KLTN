@@ -11,7 +11,7 @@ import {
 import { Brand } from './brand.entity';
 import { Category } from './category.entity';
 
-@Entity({ name: 'products' })
+@Entity({ name: 'products', synchronize: true })
 @Index(['name'])
 @Index(['price'])
 @Index(['isActive'])

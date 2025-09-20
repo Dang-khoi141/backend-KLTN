@@ -1,9 +1,9 @@
 import { Controller, Post, Body, BadRequestException } from '@nestjs/common';
 import { OtpService } from './otp.service';
 import { UserService } from '../../user/user.service';
-import { ResetPasswordDto } from './entities/reset-password.dto';
-import { OtpVerifyDto } from './entities/otp-verify.dto';
-import { OtpSendDto } from './entities/otp-send.dto';
+import { OtpSendDto } from './dto/otp-send.dto';
+import { OtpVerifyDto } from './dto/otp-verify.dto';
+import { ResetPasswordDto } from './dto/reset-password.dto';
 
 @Controller({
   path: 'otp',

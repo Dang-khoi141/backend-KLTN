@@ -81,8 +81,6 @@ export class AuthService {
       role: UserRole.CUSTOMER,
     };
 
-    data.password = await bcrypt.hash(dto.password, 10);
-
     return this.userService.create(data);
   }
 }

@@ -15,17 +15,20 @@ export class Brand {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column({ unique: true })
+  @Column({ unique: true, length: 255 })
   name: string;
 
-  @Column({ nullable: true })
-  description?: string;
+  @Column({ name: 'contact_name', nullable: true, length: 255 })
+  contactName?: string;
 
-  @Column({ nullable: true })
-  logoUrl?: string;
+  @Column({ nullable: true, length: 20 })
+  phone?: string;
 
-  @Column({ nullable: true })
-  websiteUrl?: string;
+  @Column({ nullable: true, length: 255 })
+  email?: string;
+
+  @Column({ nullable: true, length: 500 })
+  address?: string;
 
   @OneToMany(() => Product, (product) => product.brand)
   products?: Product[];
