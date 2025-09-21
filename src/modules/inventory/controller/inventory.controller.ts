@@ -6,6 +6,7 @@ import {
   Patch,
   Param,
   Delete,
+  ParseUUIDPipe,
 } from '@nestjs/common';
 import { InventoryService } from './../services/inventory.service';
 import { CreateInventoryDto } from '../dto/create-inventory.dto';
@@ -26,8 +27,8 @@ export class InventoryController {
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.inventoryService.findOne(+id);
+  findOne(@Param('id', new ParseUUIDPipe()) id: string) {
+    return this.inventoryService.findOne(id);
   }
 
   @Patch(':id')
@@ -35,11 +36,11 @@ export class InventoryController {
     @Param('id') id: string,
     @Body() updateInventoryDto: UpdateInventoryDto,
   ) {
-    return this.inventoryService.update(+id, updateInventoryDto);
+    return this.inventoryService.update(id, updateInventoryDto);
   }
 
   @Delete(':id')
   remove(@Param('id') id: string) {
-    return this.inventoryService.remove(+id);
+    return this.inventoryService.remove(id);
   }
 }

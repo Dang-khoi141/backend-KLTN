@@ -7,7 +7,7 @@ import {
 } from 'typeorm';
 import { StockReceipt } from './stock-receipt.entity';
 
-@Entity('stockreceiptdetails')
+@Entity({ name: 'stockreceiptdetails', synchronize: false })
 export class StockReceiptDetail {
   @PrimaryGeneratedColumn()
   id: number;

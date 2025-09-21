@@ -1,6 +1,6 @@
 import { Entity, Column, PrimaryColumn } from 'typeorm';
 
-@Entity('inventory')
+@Entity({ name: 'inventory', synchronize: false })
 export class Inventory {
   @PrimaryColumn('uuid')
   productId: string;

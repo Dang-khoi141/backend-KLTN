@@ -18,17 +18,27 @@ import { StockIssue } from './entities/stock-issue.entity';
 import { StockIssueDetail } from './entities/stock-issuedetail.entity';
 import { InventoryCheck } from './entities/inventory-check.entity';
 import { InventoryCheckDetail } from './entities/inventory-checkdetail.entity';
+import { InventoryReportEntity } from './entities/inventory-report.entity';
+import { InventoryReportController } from './controller/inventory-report.controller';
+import { InventoryReportService } from './services/inventory-report.service';
+import { Product } from '../catalog/entities/product.entity';
+import { Brand } from '../catalog/entities/brand.entity';
+import { Category } from '../catalog/entities/category.entity';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([
       Inventory,
+      Product,
+      Brand,
+      Category,
       StockReceipt,
       StockReceiptDetail,
       StockIssue,
       StockIssueDetail,
       InventoryCheck,
       InventoryCheckDetail,
+      InventoryReportEntity,
     ]),
   ],
   controllers: [
@@ -36,12 +46,14 @@ import { InventoryCheckDetail } from './entities/inventory-checkdetail.entity';
     StockReceiptController,
     StockIssueController,
     InventoryCheckController,
+    InventoryReportController,
   ],
   providers: [
     InventoryService,
     StockReceiptService,
     StockIssueService,
     InventoryCheckService,
+    InventoryReportService,
   ],
 })
 export class InventoryModule {}

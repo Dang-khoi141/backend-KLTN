@@ -1,6 +1,6 @@
 import { Entity, Column, PrimaryGeneratedColumn, OneToMany } from 'typeorm';
 import { StockReceiptDetail } from './stock-receiptdetail.entity';
-@Entity('stockreceipts')
+@Entity({ name: 'stockreceipts', synchronize: false })
 export class StockReceipt {
   @PrimaryGeneratedColumn()
   id: number;

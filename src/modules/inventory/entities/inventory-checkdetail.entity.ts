@@ -7,7 +7,7 @@ import {
 } from 'typeorm';
 import { InventoryCheck } from './inventory-check.entity';
 
-@Entity('inventorycheckdetails')
+@Entity({ name: 'inventorycheckdetails', synchronize: false })
 export class InventoryCheckDetail {
   @PrimaryGeneratedColumn()
   id: number;

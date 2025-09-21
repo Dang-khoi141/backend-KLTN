@@ -1,7 +1,7 @@
 import { Entity, Column, PrimaryGeneratedColumn, OneToMany } from 'typeorm';
 import { InventoryCheckDetail } from './inventory-checkdetail.entity';
 
-@Entity('inventorychecks')
+@Entity({ name: 'inventorychecks', synchronize: false })
 export class InventoryCheck {
   @PrimaryGeneratedColumn()
   id: number;
