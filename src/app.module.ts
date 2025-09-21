@@ -13,10 +13,14 @@ import { TransformInterceptor } from './modules/common/interceptors/message-resp
 import { OtpModule } from './modules/auth/otp/otp.module';
 import { CatalogModule } from './modules/catalog/catalog.module';
 import { UploadModule } from './modules/uploads/upload.module';
+import { SnakeNamingStrategy } from 'typeorm-naming-strategies';
 
 @Module({
   imports: [
-    TypeOrmModule.forRoot(dataSourceOptions),
+    TypeOrmModule.forRoot({
+      ...dataSourceOptions,
+      namingStrategy: new SnakeNamingStrategy(),
+    }),
     UserModule,
     AuthModule,
     ShoppingModule,
