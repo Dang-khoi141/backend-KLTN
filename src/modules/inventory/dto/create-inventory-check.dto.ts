@@ -13,9 +13,6 @@ class InventoryCheckDetailDto {
   productId: string;
 
   @IsInt()
-  systemQuantity: number;
-
-  @IsInt()
   actualQuantity: number;
 
   @IsOptional()

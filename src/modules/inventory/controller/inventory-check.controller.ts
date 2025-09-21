@@ -1,4 +1,11 @@
-import { Controller, Post, Get, Param, Body } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Get,
+  Param,
+  Body,
+  ParseIntPipe,
+} from '@nestjs/common';
 import { CreateInventoryCheckDto } from './../dto/create-inventory-check.dto';
 import { InventoryCheckService } from './../services/inventory-check.service';
 
@@ -17,7 +24,7 @@ export class InventoryCheckController {
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
+  findOne(@Param('id', ParseIntPipe) id: number) {
     return this.inventoryCheckService.findOne(id);
   }
 }

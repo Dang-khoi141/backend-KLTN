@@ -12,11 +12,8 @@ export class InventoryCheckDetail {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column('int')
-  checkId: number; // FK -> inventorychecks.id
-
   @Column('uuid')
-  productId: string; // FK -> products.id
+  productId: string;
 
   @Column('int')
   systemQuantity: number;
@@ -31,6 +28,6 @@ export class InventoryCheckDetail {
   notes: string;
 
   @ManyToOne(() => InventoryCheck, (check) => check.details)
-  @JoinColumn({ name: 'checkId' })
+  @JoinColumn({ name: 'check_id' })
   check: InventoryCheck;
 }
