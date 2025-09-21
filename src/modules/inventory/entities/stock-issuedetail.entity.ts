@@ -12,7 +12,7 @@ export class StockIssueDetail {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column('int')
+  @Column({ name: 'issue_id', type: 'int' })
   issueId: number;
 
   @Column('uuid')
@@ -22,6 +22,6 @@ export class StockIssueDetail {
   quantity: number;
 
   @ManyToOne(() => StockIssue, (issue) => issue.details)
-  @JoinColumn({ name: 'issueId' })
+  @JoinColumn({ name: 'issue_id' })
   issue: StockIssue;
 }
