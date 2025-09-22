@@ -25,7 +25,7 @@ export class CreateProductDto {
     example: 50000.0,
     minimum: 0,
   })
-  @Type(() => Number) // swagger prob
+  @Type(() => Number)
   @IsNumber({ maxDecimalPlaces: 2 })
   @IsPositive()
   price: number;
@@ -64,7 +64,7 @@ export class CreateProductDto {
   })
   @IsOptional()
   @IsBoolean()
-  @Transform(({ value }) => value === 'true' || value === true) //swagger prob
+  @Transform(({ value }) => value === 'true' || value === true)
   isActive?: boolean;
 
   @ApiProperty({

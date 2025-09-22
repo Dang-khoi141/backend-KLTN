@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Controller,
   Post,
   UploadedFile,
@@ -14,6 +15,9 @@ export class UploadController {
   @Post('image')
   @UseInterceptors(FileInterceptor('file'))
   async uploadImage(@UploadedFile() file: Express.Multer.File) {
+    if (!file) {
+      throw new BadRequestException('No file uploaded');
+    }
     const url = await this.s3Service.uploadFile(file, 'images');
     return { imageUrl: url };
   }

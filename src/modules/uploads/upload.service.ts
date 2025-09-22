@@ -41,8 +41,8 @@ export class S3Service {
   async uploadFromUrl(fileUrl: string, folder: string = 'uploads') {
     const response = await axios.get(fileUrl, {
       responseType: 'arraybuffer',
-      timeout: 30000, // 30 seconds timeout
-      maxContentLength: 10 * 1024 * 1024, // 10MB max
+      timeout: 30000,
+      maxContentLength: 10 * 1024 * 1024,
       headers: {
         'User-Agent': 'Mozilla/5.0 (compatible; S3Uploader/1.0)',
         Accept: 'image/*',
