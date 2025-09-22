@@ -4,7 +4,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { DeepPartial, Repository } from 'typeorm';
 import { CreateBrandDto } from '../dto/create-brand.dto';
 import { UpdateBrandDto } from '../dto/update-brand.dto';
 import { Brand } from '../entities/brand.entity';
@@ -33,13 +33,20 @@ export class BrandService {
     let brand = await this.brandRepository.findOne({
       where: { name: 'No Brand' },
     });
+
     if (!brand) {
-      brand = this.brandRepository.create({
+      const defaultBrand: DeepPartial<Brand> = {
         name: 'No Brand',
-        description: 'Default brand',
-      });
-      await this.brandRepository.save(brand);
+        contactName: 'Default contact',
+        phone: undefined,
+        email: undefined,
+        address: undefined,
+      };
+
+      brand = this.brandRepository.create(defaultBrand);
+      brand = await this.brandRepository.save(brand);
     }
+
     return brand;
   }
 

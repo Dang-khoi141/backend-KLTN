@@ -84,7 +84,7 @@ export class ProductService {
         product.image = imageUrl;
 
         if (oldImageUrl) {
-          // await this.s3Service.deleteFile(oldImageUrl);
+          await this.s3Service.deleteFile(oldImageUrl);
         }
       }
     }
@@ -96,15 +96,12 @@ export class ProductService {
     const product = await this.findOne(id);
 
     if (product.image) {
-      // await this.s3Service.deleteFile(product.image);
+      await this.s3Service.deleteFile(product.image);
     }
 
     await this.productRepository.delete(id);
   }
 
-  // ==================================================
-  // Helpers
-  // ==================================================
   private async getDefaultCategory(): Promise<Category> {
     return this.categoryService.findOrCreateDefault();
   }

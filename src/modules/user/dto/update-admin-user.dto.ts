@@ -1,44 +1,30 @@
 import { ApiProperty } from '@nestjs/swagger';
-import {
-  IsEmail,
-  IsEnum,
-  IsOptional,
-  IsString,
-  Length,
-  MinLength,
-} from 'class-validator';
+import { IsEmail, IsEnum, IsOptional, IsString, Length } from 'class-validator';
 import { UserRole } from '../enums/user-role.enum';
 
 export class UpdateAdminUserDto {
-  @ApiProperty({
-    example: 'John Doe',
-    description: 'User Name',
-  })
+  @ApiProperty({ example: 'John Doe', description: 'User Name' })
   @IsString({ message: 'Name is not valid' })
-  name: string;
+  @IsOptional()
+  name?: string;
 
-  @ApiProperty({
-    example: 'user@example.com',
-    description: 'Email',
-  })
-  @IsEmail({})
-  email: string;
+  @ApiProperty({ example: 'user@example.com', description: 'Email' })
+  @IsEmail()
+  @IsOptional()
+  email?: string;
 
   @IsString()
   @Length(10, 11, { message: 'Phone must be 10-11 digits' })
-  phone: string;
-
-  @ApiProperty({
-    example: 'strongPassword123',
-    description: 'Password (Minimum 6 characters)',
-    minLength: 6,
-  })
-  @IsString()
-  @MinLength(6, { message: 'Password (Minimum 6 characters)' })
-  password: string;
+  @IsOptional()
+  phone?: string;
 
   @ApiProperty({ enum: UserRole, default: UserRole.CUSTOMER })
   @IsEnum(UserRole)
   @IsOptional()
   role?: UserRole;
+
+  @ApiProperty({ example: 'https://.../avatar.png', description: 'Avatar URL' })
+  @IsString()
+  @IsOptional()
+  avatar?: string;
 }

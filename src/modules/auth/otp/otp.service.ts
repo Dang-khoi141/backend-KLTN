@@ -3,7 +3,7 @@ import * as nodemailer from 'nodemailer';
 import { randomInt } from 'crypto';
 import * as bcrypt from 'bcrypt';
 import { UserService } from '../../user/user.service';
-import { ResetPasswordDto } from './entities/reset-password.dto';
+import { ResetPasswordDto } from './dto/reset-password.dto';
 
 @Injectable()
 export class OtpService {

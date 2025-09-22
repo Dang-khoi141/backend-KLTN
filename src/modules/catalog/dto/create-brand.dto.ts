@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsOptional, IsString, IsUrl, MinLength } from 'class-validator';
+import { IsOptional, IsString, IsEmail, MinLength } from 'class-validator';
 
 export class CreateBrandDto {
   @ApiProperty({
@@ -11,26 +11,34 @@ export class CreateBrandDto {
   name: string;
 
   @ApiProperty({
-    example: 'Technology company',
+    example: 'Tim Cook',
     required: false,
   })
   @IsOptional()
   @IsString()
-  description?: string;
+  contactName?: string;
 
   @ApiProperty({
-    example: 'https://example.com/logo.png',
+    example: '+1 123 456 789',
     required: false,
   })
   @IsOptional()
-  @IsUrl()
-  logoUrl?: string;
+  @IsString()
+  phone?: string;
 
   @ApiProperty({
-    example: 'https://apple.com',
+    example: 'contact@apple.com',
     required: false,
   })
   @IsOptional()
-  @IsUrl()
-  websiteUrl?: string;
+  @IsEmail()
+  email?: string;
+
+  @ApiProperty({
+    example: '1 Apple Park Way, Cupertino, CA, USA',
+    required: false,
+  })
+  @IsOptional()
+  @IsString()
+  address?: string;
 }

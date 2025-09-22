@@ -46,24 +46,30 @@ export class UserService {
     return this.userRepository.findOne({ where: { id } });
   }
   async update(id: string, userDto: Partial<UpdateUserDto>): Promise<Users> {
-    await this.userRepository.update(id, userDto);
     const user = await this.findOneById(id);
+    console.log('🚀 ~ UserService ~ update ~ user:', user);
     if (!user) {
       throw new NotFoundException(`User with ID ${id} not found`);
     }
-    return user;
+
+    Object.assign(user, userDto);
+
+    return await this.userRepository.save(user);
   }
 
   async updateAdmin(
     id: string,
     updateAdminUserDto: Partial<UpdateAdminUserDto>,
   ): Promise<Users> {
-    await this.userRepository.update(id, updateAdminUserDto);
     const user = await this.findOneById(id);
+    console.log('🚀 ~ UserService ~ updateAdmin ~ user:', user);
     if (!user) {
       throw new NotFoundException(`User with ID ${id} not found`);
     }
-    return user;
+
+    Object.assign(user, updateAdminUserDto);
+
+    return await this.userRepository.save(user);
   }
 
   async delete(id: string): Promise<void> {

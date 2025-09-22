@@ -49,7 +49,7 @@ export class ProductController {
   @ResponseMessage('Product updated successfully')
   @ApiConsumes('multipart/form-data')
   @ApiBody({ type: UpdateProductDto })
-  @UseInterceptors(FileInterceptor('imageFile'))
+  @UseInterceptors(FileInterceptor('file'))
   async update(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: UpdateProductDto,
