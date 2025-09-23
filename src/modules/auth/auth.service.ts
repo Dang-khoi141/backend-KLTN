@@ -15,6 +15,7 @@ import { UserService } from '../user/user.service';
 import { Users } from '../user/entities/users.entity';
 import { UserRole } from '../user/enums/user-role.enum';
 import { UserDto } from '../user/dto/user.dto';
+import { OtpService } from './otp/otp.service';
 
 @Injectable()
 export class AuthService {
@@ -22,6 +23,7 @@ export class AuthService {
     private userService: UserService,
     private jwtService: JwtService,
     private configService: ConfigService,
+    private otpService: OtpService,
   ) {}
 
   async validateUser(email: string, password: string): Promise<Users> {
@@ -68,11 +70,17 @@ export class AuthService {
     return { accessToken };
   }
   async register(dto: registerDTO) {
+    const isValidOtp = this.otpService.verifyOtp(dto.email, dto.otp);
+
+    if (!isValidOtp) {
+      throw new UnauthorizedException('Invalid or expired OTP');
+    }
+
     const data: UserDto = {
       ...dto,
       role: UserRole.CUSTOMER,
     };
-    const createRegister = await this.userService.create(data);
-    return createRegister;
+
+    return this.userService.create(data);
   }
 }

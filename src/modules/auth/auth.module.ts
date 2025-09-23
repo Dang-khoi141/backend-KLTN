@@ -7,6 +7,7 @@ import { JwtModule } from '@nestjs/jwt';
 import { JwtStrategy } from './strategies/jwt.strategy';
 import { UserModule } from '../user/user.module';
 import { ConfigModule } from '@nestjs/config';
+import { OtpModule } from './otp/otp.module';
 
 @Module({
   imports: [
@@ -17,6 +18,7 @@ import { ConfigModule } from '@nestjs/config';
       secret: process.env.JWT_SECRET,
       signOptions: { expiresIn: '60m' },
     }),
+    OtpModule,
   ],
   controllers: [AuthController],
   providers: [AuthService, JwtStrategy],

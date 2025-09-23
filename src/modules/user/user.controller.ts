@@ -7,7 +7,10 @@ import {
   Param,
   Patch,
   Post,
+  Req,
+  UploadedFile,
   UseGuards,
+  UseInterceptors,
 } from '@nestjs/common';
 import { UserService } from './user.service';
 import { UserDto } from './dto/user.dto';
@@ -15,9 +18,10 @@ import { Users } from './entities/users.entity';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { JwtAuthGuard } from '../auth/guards/jwt.guard';
 import { UserRole } from './enums/user-role.enum';
-import { Roles } from '../common/decorator/roles.decorator';
+import { Roles } from '../common/decorators/roles.decorator';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { UpdateAdminUserDto } from './dto/update-admin-user.dto';
+import { FileInterceptor } from '@nestjs/platform-express';
 
 @Controller({
   path: 'users',
@@ -29,8 +33,12 @@ export class UserController {
 
   @Post()
   @Roles(UserRole.SUPERADMIN)
-  async create(@Body() createUserDto: UserDto): Promise<Users> {
-    return this.userService.create(createUserDto);
+  @UseInterceptors(FileInterceptor('file'))
+  async create(
+    @Body() createUserDto: UserDto,
+    @UploadedFile() file?: Express.Multer.File,
+  ): Promise<Users> {
+    return this.userService.create(createUserDto, file);
   }
   @Get('')
   @Roles(UserRole.ADMIN, UserRole.SUPERADMIN)
@@ -79,5 +87,13 @@ export class UserController {
       throw new NotFoundException(`User with email ${email} not found`);
     }
     return user;
+  }
+
+  @Patch('change-password')
+  @UseGuards(JwtAuthGuard)
+  async changePassword(@Req() req, @Body('newPassword') newPassword: string) {
+    const email = req.user.email;
+    await this.userService.updatePassword(email, newPassword);
+    return { message: 'Password updated successfully' };
   }
 }

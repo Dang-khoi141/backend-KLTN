@@ -11,22 +11,31 @@ import { UserDto } from './dto/user.dto';
 import { Users } from './entities/users.entity';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { UpdateAdminUserDto } from './dto/update-admin-user.dto';
+import { S3Service } from '../uploads/upload.service';
 
 @Injectable()
 export class UserService {
   constructor(
     @InjectRepository(Users)
     private readonly userRepository: Repository<Users>,
+    private readonly s3Service: S3Service,
   ) {}
-  async create(UserDto: UserDto) {
+  async create(userDto: UserDto, file?: Express.Multer.File) {
     const checkemail = await this.userRepository.findOneBy({
-      email: UserDto.email,
+      email: userDto.email,
     });
     if (checkemail) {
       throw new ConflictException('Email already in use');
     }
-    const user = this.userRepository.create(UserDto);
+
+    const user = this.userRepository.create(userDto);
     user.password = await bcrypt.hash(user.password, 10);
+
+    if (file) {
+      const avatarUrl = await this.s3Service.uploadFile(file, 'users');
+      user.avatar = avatarUrl;
+    }
+
     return this.userRepository.save(user);
   }
 
@@ -37,24 +46,30 @@ export class UserService {
     return this.userRepository.findOne({ where: { id } });
   }
   async update(id: string, userDto: Partial<UpdateUserDto>): Promise<Users> {
-    await this.userRepository.update(id, userDto);
     const user = await this.findOneById(id);
+    console.log('🚀 ~ UserService ~ update ~ user:', user);
     if (!user) {
       throw new NotFoundException(`User with ID ${id} not found`);
     }
-    return user;
+
+    Object.assign(user, userDto);
+
+    return await this.userRepository.save(user);
   }
 
   async updateAdmin(
     id: string,
     updateAdminUserDto: Partial<UpdateAdminUserDto>,
   ): Promise<Users> {
-    await this.userRepository.update(id, updateAdminUserDto);
     const user = await this.findOneById(id);
+    console.log('🚀 ~ UserService ~ updateAdmin ~ user:', user);
     if (!user) {
       throw new NotFoundException(`User with ID ${id} not found`);
     }
-    return user;
+
+    Object.assign(user, updateAdminUserDto);
+
+    return await this.userRepository.save(user);
   }
 
   async delete(id: string): Promise<void> {
@@ -68,5 +83,14 @@ export class UserService {
     return await this.userRepository.findOne({
       where: { email },
     });
+  }
+
+  async updatePassword(email: string, hashedPassword: string): Promise<void> {
+    const user = await this.findByEmail(email);
+    if (!user) {
+      throw new NotFoundException(`User with email ${email} not found`);
+    }
+    user.password = hashedPassword;
+    await this.userRepository.save(user);
   }
 }
