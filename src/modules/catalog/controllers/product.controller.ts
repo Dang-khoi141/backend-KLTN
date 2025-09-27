@@ -25,7 +25,7 @@ export class ProductController {
   @ResponseMessage('Product created successfully')
   @ApiConsumes('multipart/form-data')
   @ApiBody({ type: CreateProductDto })
-  @UseInterceptors(FileInterceptor('file'))
+  @UseInterceptors(FileInterceptor('imageFile'))
   async createProduct(
     @Body() body: CreateProductDto,
     @UploadedFile() imageFile?: Express.Multer.File,

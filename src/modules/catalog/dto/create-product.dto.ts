@@ -56,6 +56,8 @@ export class CreateProductDto {
     required: false,
     description: 'Upload image file (optional)',
   })
+  @IsOptional()
+  @IsString()
   imageFile?: any;
 
   @ApiProperty({
