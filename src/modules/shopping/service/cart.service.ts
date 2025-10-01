@@ -9,6 +9,8 @@ import { Cart } from '../entities/cart.entity';
 import { Repository } from 'typeorm';
 import { CartItem } from '../entities/cart-item.entity';
 import { Product } from '../../catalog/entities/product.entity';
+import { UpdateCartDto } from '../dto/update-cart.dto';
+import { AddToCartDto } from '../dto/add-to-cart.dto';
 
 @Injectable()
 export class CartService {
@@ -36,11 +38,9 @@ export class CartService {
     return cart;
   }
 
-  async add(
-    userId: string,
-    productId: string,
-    quantity: number,
-  ): Promise<Cart> {
+  async add(dto: AddToCartDto): Promise<Cart> {
+    const { userId, productId, quantity } = dto;
+
     if (quantity <= 0) throw new BadRequestException('Quantity must be > 0');
 
     const cart = await this.getOrCreateCart(userId);
@@ -48,10 +48,10 @@ export class CartService {
       where: { id: productId },
     });
     if (!product) throw new NotFoundException('Product not found');
-    if (product.isActive === false)
-      throw new BadRequestException('Product is inactive');
+    if (!product.isActive) throw new BadRequestException('Product is inactive');
 
     let item = cart.items.find((i) => i.product.id === productId);
+
     if (item) {
       item.quantity += quantity;
       await this.itemRepo.save(item);
@@ -64,19 +64,24 @@ export class CartService {
       });
       await this.itemRepo.save(item);
     }
+
     return this.cartRepo.findOne({
       where: { id: cart.id },
       relations: ['items', 'items.product'],
     }) as Promise<Cart>;
   }
 
-  async updateQuantity(
-    userId: string,
-    productId: string,
-    quantity: number,
-  ): Promise<Cart> {
+  async updateQuantity(dto: UpdateCartDto): Promise<Cart> {
+    const { userId, productId, quantity } = dto;
+    if (!userId || !productId || quantity === undefined) {
+      throw new BadRequestException(
+        'userId, productId and quantity are required',
+      );
+    }
+
     const cart = await this.getOrCreateCart(userId);
     const item = cart.items.find((i) => i.product.id === productId);
+
     if (!item) throw new NotFoundException('Item not found in cart');
 
     if (quantity <= 0) {
@@ -85,6 +90,7 @@ export class CartService {
       item.quantity = quantity;
       await this.itemRepo.save(item);
     }
+
     return this.getOrCreateCart(userId);
   }
 

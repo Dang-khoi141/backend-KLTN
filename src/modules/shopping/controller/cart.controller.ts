@@ -6,13 +6,13 @@ import {
   HttpCode,
   Param,
   ParseUUIDPipe,
+  Patch,
   Post,
-  Put,
 } from '@nestjs/common';
 
 import { AddToCartDto } from '../dto/add-to-cart.dto';
-import { UpdateQtyDto } from '../dto/update-qty.dto';
 import { CartService } from '../service/cart.service';
+import { UpdateCartDto } from '../dto/update-cart.dto';
 
 @Controller('cart')
 export class CartController {
@@ -25,16 +25,12 @@ export class CartController {
 
   @Post('add')
   add(@Body() dto: AddToCartDto) {
-    return this.cartService.add(dto.userId, dto.productId, dto.quantity);
+    return this.cartService.add(dto);
   }
 
-  @Put('quantity')
-  updateQty(@Body() dto: UpdateQtyDto) {
-    return this.cartService.updateQuantity(
-      dto.userId,
-      dto.productId,
-      dto.quantity,
-    );
+  @Patch('quantity')
+  updateQty(@Body() dto: UpdateCartDto) {
+    return this.cartService.updateQuantity(dto);
   }
 
   @Delete(':userId/item/:productId')
