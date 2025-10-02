@@ -7,6 +7,7 @@ import {
   ParseUUIDPipe,
   Patch,
   Post,
+  Query,
   UploadedFile,
   UseInterceptors,
 } from '@nestjs/common';
@@ -16,6 +17,7 @@ import { ResponseMessage } from 'src/modules/common/decorators/response-message.
 import { CreateProductDto } from '../dto/create-product.dto';
 import { UpdateProductDto } from '../dto/update-product.dto';
 import { ProductService } from '../services/product.service';
+import { ProductQueryDto } from '../dto/product-query.dto';
 
 @ApiTags('Products')
 @Controller('products')
@@ -37,6 +39,11 @@ export class ProductController {
   @ResponseMessage('Products retrieved successfully')
   findAll() {
     return this.productService.findAll();
+  }
+
+  @Get('search')
+  async search(@Query() query: ProductQueryDto) {
+    return this.productService.search(query);
   }
 
   @Get(':id')

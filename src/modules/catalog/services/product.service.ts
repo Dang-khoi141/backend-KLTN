@@ -9,6 +9,7 @@ import { Product } from '../entities/product.entity';
 import { CategoryService } from './category.service';
 import { BrandService } from './brand.service';
 import { Brand } from '../entities/brand.entity';
+import { ProductQueryDto } from '../dto/product-query.dto';
 
 @Injectable()
 export class ProductService {
@@ -52,6 +53,67 @@ export class ProductService {
     return this.productRepository.find({
       relations: ['category', 'brand'],
     });
+  }
+
+  async search(query: ProductQueryDto) {
+    const {
+      search,
+      categoryId,
+      brandId,
+      isActive,
+      minPrice,
+      maxPrice,
+      page = 1,
+      limit = 10,
+    } = query;
+
+    const qb = this.productRepository
+      .createQueryBuilder('product')
+      .leftJoinAndSelect('product.category', 'category')
+      .leftJoinAndSelect('product.brand', 'brand');
+
+    if (search) {
+      qb.andWhere(
+        '(product.name LIKE :search OR product.description LIKE :search)',
+        {
+          search: `%${search}%`,
+        },
+      );
+    }
+
+    if (categoryId) {
+      qb.andWhere('category.id = :categoryId', { categoryId });
+    }
+
+    if (brandId) {
+      qb.andWhere('brand.id = :brandId', { brandId });
+    }
+
+    if (isActive !== undefined) {
+      qb.andWhere('product.isActive = :isActive', { isActive });
+    }
+
+    if (minPrice) {
+      qb.andWhere('product.price >= :minPrice', { minPrice });
+    }
+
+    if (maxPrice) {
+      qb.andWhere('product.price <= :maxPrice', { maxPrice });
+    }
+
+    qb.orderBy('product.createdAt', 'DESC');
+
+    qb.skip((page - 1) * limit).take(limit);
+
+    const [data, total] = await qb.getManyAndCount();
+
+    return {
+      data,
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
+    };
   }
 
   async findOne(id: string): Promise<Product> {
