@@ -3,14 +3,14 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { Users } from '../../user/entities/users.entity';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Cart } from '../entities/cart.entity';
 import { Repository } from 'typeorm';
+import { Cart } from '../entities/cart.entity';
 import { CartItem } from '../entities/cart-item.entity';
 import { Product } from '../../catalog/entities/product.entity';
-import { UpdateCartDto } from '../dto/update-cart.dto';
+import { Users } from '../../user/entities/users.entity';
 import { AddToCartDto } from '../dto/add-to-cart.dto';
+import { UpdateCartDto } from '../dto/update-cart.dto';
 
 @Injectable()
 export class CartService {
@@ -38,8 +38,8 @@ export class CartService {
     return cart;
   }
 
-  async add(dto: AddToCartDto): Promise<Cart> {
-    const { userId, productId, quantity } = dto;
+  async add(userId: string, dto: AddToCartDto): Promise<Cart> {
+    const { productId, quantity } = dto;
 
     if (quantity <= 0) throw new BadRequestException('Quantity must be > 0');
 
@@ -47,6 +47,7 @@ export class CartService {
     const product = await this.productRepo.findOne({
       where: { id: productId },
     });
+
     if (!product) throw new NotFoundException('Product not found');
     if (!product.isActive) throw new BadRequestException('Product is inactive');
 
@@ -65,19 +66,11 @@ export class CartService {
       await this.itemRepo.save(item);
     }
 
-    return this.cartRepo.findOne({
-      where: { id: cart.id },
-      relations: ['items', 'items.product'],
-    }) as Promise<Cart>;
+    return this.getOrCreateCart(userId);
   }
 
-  async updateQuantity(dto: UpdateCartDto): Promise<Cart> {
-    const { userId, productId, quantity } = dto;
-    if (!userId || !productId || quantity === undefined) {
-      throw new BadRequestException(
-        'userId, productId and quantity are required',
-      );
-    }
+  async updateQuantity(userId: string, dto: UpdateCartDto): Promise<Cart> {
+    const { productId, quantity } = dto;
 
     const cart = await this.getOrCreateCart(userId);
     const item = cart.items.find((i) => i.product.id === productId);
@@ -97,7 +90,9 @@ export class CartService {
   async removeItem(userId: string, productId: string): Promise<Cart> {
     const cart = await this.getOrCreateCart(userId);
     const item = cart.items.find((i) => i.product.id === productId);
-    if (item) await this.itemRepo.delete({ id: item.id });
+    if (item) {
+      await this.itemRepo.delete({ id: item.id });
+    }
     return this.getOrCreateCart(userId);
   }
 
