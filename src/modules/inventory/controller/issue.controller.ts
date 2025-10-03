@@ -1,8 +1,18 @@
-import { Controller, Post, Body, Get, Param, Req } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Body,
+  Get,
+  Param,
+  Req,
+  UseGuards,
+} from '@nestjs/common';
 import { CreateIssueDto } from '../dto/create-issue.dto';
 import { IssueService } from '../service/issue.service';
+import { JwtAuthGuard } from '../../auth/guards/jwt.guard';
 
 @Controller('inventory/issues')
+@UseGuards(JwtAuthGuard)
 export class IssueController {
   constructor(private readonly issueService: IssueService) {}
 

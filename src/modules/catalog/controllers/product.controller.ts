@@ -9,6 +9,7 @@ import {
   Post,
   Query,
   UploadedFile,
+  UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
@@ -18,12 +19,14 @@ import { CreateProductDto } from '../dto/create-product.dto';
 import { UpdateProductDto } from '../dto/update-product.dto';
 import { ProductService } from '../services/product.service';
 import { ProductQueryDto } from '../dto/product-query.dto';
+import { JwtAuthGuard } from '../../auth/guards/jwt.guard';
 
 @ApiTags('Products')
 @Controller('products')
 export class ProductController {
   constructor(private readonly productService: ProductService) {}
   @Post()
+  @UseGuards(JwtAuthGuard)
   @ResponseMessage('Product created successfully')
   @ApiConsumes('multipart/form-data')
   @ApiBody({ type: CreateProductDto })
@@ -53,6 +56,7 @@ export class ProductController {
   }
 
   @Patch(':id')
+  @UseGuards(JwtAuthGuard)
   @ResponseMessage('Product updated successfully')
   @ApiConsumes('multipart/form-data')
   @ApiBody({ type: UpdateProductDto })
@@ -66,6 +70,7 @@ export class ProductController {
   }
 
   @Delete(':id')
+  @UseGuards(JwtAuthGuard)
   @ResponseMessage('Product deleted successfully')
   remove(@Param('id', ParseUUIDPipe) id: string) {
     return this.productService.remove(id);

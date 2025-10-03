@@ -1,8 +1,18 @@
-import { Controller, Post, Body, Get, Param, Req } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Body,
+  Get,
+  Param,
+  Req,
+  UseGuards,
+} from '@nestjs/common';
 import { CreateCheckDto } from '../dto/create-check.dto';
 import { CheckService } from '../service/check.service';
+import { JwtAuthGuard } from '../../auth/guards/jwt.guard';
 
 @Controller('inventory/checks')
+@UseGuards(JwtAuthGuard)
 export class CheckController {
   constructor(private readonly checkService: CheckService) {}
 

@@ -1,8 +1,18 @@
-import { Controller, Post, Body, Get, Param, Req } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Body,
+  Get,
+  Param,
+  Req,
+  UseGuards,
+} from '@nestjs/common';
 import { CreateReceiptDto } from '../dto/create-receipt.dto';
 import { ReceiptService } from '../service/receipt.service';
+import { JwtAuthGuard } from '../../auth/guards/jwt.guard';
 
 @Controller('inventory/receipts')
+@UseGuards(JwtAuthGuard)
 export class ReceiptController {
   constructor(private readonly receiptService: ReceiptService) {}
 
