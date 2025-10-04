@@ -1,8 +1,10 @@
-import { Controller, Get, Param } from '@nestjs/common';
+import { Controller, Get, Param, UseGuards } from '@nestjs/common';
 import { InventoryService } from '../service/inventory.service';
 import { ResponseMessage } from 'src/modules/common/decorators/response-message.decorator';
+import { JwtAuthGuard } from '../../auth/guards/jwt.guard';
 
 @Controller('inventory')
+@UseGuards(JwtAuthGuard)
 export class InventoryController {
   constructor(private readonly inventoryService: InventoryService) {}
 

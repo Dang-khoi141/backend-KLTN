@@ -8,12 +8,14 @@ import {
   Patch,
   Post,
   Query,
+  UseGuards,
 } from '@nestjs/common';
 import { ApiBody, ApiQuery, ApiTags } from '@nestjs/swagger';
 import { ResponseMessage } from 'src/modules/common/decorators/response-message.decorator';
 import { CreateBrandDto } from '../dto/create-brand.dto';
 import { UpdateBrandDto } from '../dto/update-brand.dto';
 import { BrandService } from '../services/brand.service';
+import { JwtAuthGuard } from '../../auth/guards/jwt.guard';
 
 @ApiTags('Brands')
 @Controller('brands')
@@ -21,6 +23,7 @@ export class BrandController {
   constructor(private readonly brandService: BrandService) {}
 
   @Post()
+  @UseGuards(JwtAuthGuard)
   @ResponseMessage('Brand created successfully')
   @ApiBody({ type: CreateBrandDto })
   create(@Body() dto: CreateBrandDto) {
@@ -53,6 +56,7 @@ export class BrandController {
   }
 
   @Patch(':id')
+  @UseGuards(JwtAuthGuard)
   @ResponseMessage('Brand updated successfully')
   @ApiBody({ type: UpdateBrandDto })
   update(@Param('id', ParseUUIDPipe) id: string, @Body() dto: UpdateBrandDto) {
@@ -60,6 +64,7 @@ export class BrandController {
   }
 
   @Delete(':id')
+  @UseGuards(JwtAuthGuard)
   @ResponseMessage('Brand deleted successfully')
   remove(@Param('id', ParseUUIDPipe) id: string) {
     return this.brandService.remove(id);

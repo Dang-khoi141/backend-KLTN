@@ -6,14 +6,17 @@ import {
   ParseUUIDPipe,
   Patch,
   Post,
+  UseGuards,
 } from '@nestjs/common';
 import { CheckoutDto } from '../dto/checkout.dto';
 import { OrderService } from '../service/order.service';
 import { ResponseMessage } from 'src/modules/common/decorators/response-message.decorator';
+import { JwtAuthGuard } from '../../auth/guards/jwt.guard';
 
 type OrderStatusParam = 'PENDING' | 'PAID' | 'CANCELED';
 
 @Controller('orders')
+@UseGuards(JwtAuthGuard)
 export class OrderController {
   constructor(private readonly orderService: OrderService) {}
 
