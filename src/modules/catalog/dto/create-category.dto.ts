@@ -26,4 +26,12 @@ export class CreateCategoryDto {
   @IsOptional()
   @IsUUID()
   parentId?: string;
+
+  @ApiProperty({
+    example: 'https://example.com/images/fruits.png',
+    required: false,
+  })
+  @IsOptional()
+  @IsString()
+  imageUrl?: string;
 }

@@ -41,6 +41,12 @@ export class CategoryController {
   // getTree() {
   //   return this.categoryService.getTree();
   // }
+  @Get('top')
+  @ResponseMessage('Top categories retrieved successfully')
+  getTopCategories(@Query('limit') limit?: string) {
+    const topLimit = limit ? parseInt(limit, 10) : 5;
+    return this.categoryService.findTopCategories(topLimit);
+  }
 
   @Get(':id')
   @ResponseMessage('Category retrieved successfully')

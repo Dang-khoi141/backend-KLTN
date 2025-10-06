@@ -56,8 +56,10 @@ export class CategoryService {
     });
   }
 
-  async findOne(id: string, includeChildren = false): Promise<Category> {
-    const relations = includeChildren ? ['children', 'parent'] : ['parent'];
+  async findOne(id: string, includeRelations = false): Promise<Category> {
+    const relations = includeRelations
+      ? ['children', 'parent', 'products']
+      : ['parent'];
 
     const category = await this.categoryRepository.findOne({
       where: { id },
@@ -173,5 +175,24 @@ export class CategoryService {
       throw new BadRequestException('Cannot delete category with products');
     }
     await this.categoryRepository.delete(id);
+  }
+
+  async findTopCategories(limit = 5) {
+    return this.categoryRepository
+      .createQueryBuilder('c')
+      .innerJoin('products', 'p', 'p.category_id = c.id')
+      .innerJoin('order_items', 'oi', 'oi.product_id = p.id')
+      .innerJoin('orders', 'o', 'o.id = oi.order_id')
+      .select('c.id', 'id')
+      .addSelect('c.name', 'name')
+      .addSelect('c.image_url', 'imageUrl') // nếu có cột ảnh
+      .addSelect('COUNT(DISTINCT p.id)', 'totalProducts')
+      .where('o.status = :status', { status: 'COMPLETED' })
+      .groupBy('c.id')
+      .addGroupBy('c.name')
+      .addGroupBy('c.image_url')
+      .orderBy('COUNT(DISTINCT p.id)', 'DESC')
+      .limit(limit)
+      .getRawMany();
   }
 }

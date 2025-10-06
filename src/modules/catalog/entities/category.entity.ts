@@ -41,4 +41,7 @@ export class Category {
 
   @UpdateDateColumn({ name: 'updated_at' })
   updatedAt: Date;
+
+  @Column({ name: 'image_url', nullable: true })
+  imageUrl?: string;
 }
