@@ -20,11 +20,16 @@ import { UpdateProductDto } from '../dto/update-product.dto';
 import { ProductService } from '../services/product.service';
 import { ProductQueryDto } from '../dto/product-query.dto';
 import { JwtAuthGuard } from '../../auth/guards/jwt.guard';
+import { CreatePaymentDto } from '../../payment/types/dto';
+import { PaymentService } from '../../payment/payment.service';
 
 @ApiTags('Products')
 @Controller('products')
 export class ProductController {
-  constructor(private readonly productService: ProductService) {}
+  constructor(
+    private readonly productService: ProductService,
+    private readonly paymentService: PaymentService,
+  ) {}
   @Post()
   @UseGuards(JwtAuthGuard)
   @ResponseMessage('Product created successfully')
@@ -74,5 +79,28 @@ export class ProductController {
   @ResponseMessage('Product deleted successfully')
   remove(@Param('id', ParseUUIDPipe) id: string) {
     return this.productService.remove(id);
+  }
+
+  @Get(':id/pay')
+  async createPaymentForProduct(@Param('id') id: string) {
+    const product = await this.productService.findOne(id);
+
+    const dto: CreatePaymentDto = {
+      orderId: Date.now().toString(),
+      description: `Thanh toán sản phẩm ${product.name}`,
+      amount: Number(product.price),
+    };
+
+    const payResponse = await this.paymentService.createPayment(dto);
+
+    return {
+      message: 'Tạo mã QR thanh toán thành công',
+      product: {
+        id: product.id,
+        name: product.name,
+        price: product.price,
+      },
+      payment: payResponse.data,
+    };
   }
 }

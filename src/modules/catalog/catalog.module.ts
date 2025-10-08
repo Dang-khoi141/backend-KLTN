@@ -12,9 +12,14 @@ import { ProductService } from './services/product.service';
 import { ProductController } from './controllers/product.controller';
 import { BrandController } from './controllers/brand.controller';
 import { UploadModule } from '../uploads/upload.module';
+import { PaymentModule } from '../payment/payment.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Category, Brand, Product]), UploadModule],
+  imports: [
+    TypeOrmModule.forFeature([Category, Brand, Product]),
+    UploadModule,
+    PaymentModule,
+  ],
   providers: [CategoryService, BrandService, ProductService],
   controllers: [CategoryController, BrandController, ProductController],
 })
