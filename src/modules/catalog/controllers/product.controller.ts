@@ -88,7 +88,13 @@ export class ProductController {
     const dto: CreatePaymentDto = {
       orderId: Date.now().toString(),
       description: `Thanh toán sản phẩm ${product.name}`,
-      amount: Number(product.price),
+      items: [
+        {
+          name: product.name,
+          price: Number(product.price),
+          quantity: 1,
+        },
+      ],
     };
 
     const payResponse = await this.paymentService.createPayment(dto);
@@ -100,7 +106,7 @@ export class ProductController {
         name: product.name,
         price: product.price,
       },
-      payment: payResponse.data,
+      payment: payResponse,
     };
   }
 }

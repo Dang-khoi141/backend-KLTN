@@ -3,7 +3,11 @@ export type PaymentStatus = 'pending' | 'succeeded' | 'failed' | 'canceled';
 export interface CreatePaymentDto {
   orderId: string;
   description: string;
-  amount: number;
+  items: {
+    name: string;
+    price: number;
+    quantity: number;
+  }[];
 }
 
 export interface Payment {
