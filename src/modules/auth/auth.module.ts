@@ -14,10 +14,7 @@ import { OtpModule } from './otp/otp.module';
     UserModule,
     PassportModule,
     ConfigModule,
-    JwtModule.register({
-      secret: process.env.JWT_SECRET,
-      signOptions: { expiresIn: '60m' },
-    }),
+    JwtModule.register({}),
     OtpModule,
   ],
   controllers: [AuthController],

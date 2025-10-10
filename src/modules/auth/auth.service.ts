@@ -91,20 +91,19 @@ export class AuthService {
           'refresh_secret_key',
       });
 
-      const newAccessToken = this.jwtService.sign(
-        {
-          id: payload.id,
-          email: payload.email,
-          role: payload.role,
-          name: payload.name,
-        },
-        {
-          secret: this.configService.get<string>('JWT_SECRET'),
-          expiresIn: this.configService.get<string>('JWT_EXPIRES_IN') || '15m',
-        },
-      );
+      const newPayload: IJwtPayload = {
+        id: payload.id,
+        email: payload.email,
+        role: payload.role,
+        name: payload.name,
+      };
 
-      const newRefreshToken = this.jwtService.sign(payload, {
+      const newAccessToken = this.jwtService.sign(newPayload, {
+        secret: this.configService.get<string>('JWT_SECRET'),
+        expiresIn: this.configService.get<string>('JWT_EXPIRES_IN') || '15m',
+      });
+
+      const newRefreshToken = this.jwtService.sign(newPayload, {
         secret:
           this.configService.get<string>('JWT_REFRESH_SECRET') ||
           'refresh_secret_key',
