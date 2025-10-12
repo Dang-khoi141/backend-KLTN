@@ -24,8 +24,7 @@ export class PaymentController {
   @Post('webhook')
   @UseGuards(PaymentWebhookGuard)
   handleWebhook(@Body() body: PayosWebhookBodyPayload) {
-    console.log('✅ PayOS webhook received:', body);
-    return this.paymentService.handleWebhook();
+    return this.paymentService.handleWebhook(body);
   }
 
   @Get('status/:orderCode')
