@@ -19,17 +19,23 @@ export class CartService {
     @InjectRepository(CartItem) private readonly itemRepo: Repository<CartItem>,
     @InjectRepository(Product)
     private readonly productRepo: Repository<Product>,
+    @InjectRepository(Users)
+    private readonly userRepo: Repository<Users>,
   ) {}
 
   async getOrCreateCart(userId: string): Promise<Cart> {
     let cart = await this.cartRepo.findOne({
       where: { user: { id: userId } },
-      relations: ['items', 'items.product'],
+      relations: ['items', 'items.product', 'user'],
     });
 
     if (!cart) {
+      const user = await this.userRepo.findOne({ where: { id: userId } });
+      if (!user) {
+        throw new NotFoundException('User not found');
+      }
       cart = this.cartRepo.create({
-        user: { id: userId } as Users,
+        user: user,
         items: [],
       });
       cart = await this.cartRepo.save(cart);
@@ -58,14 +64,13 @@ export class CartService {
       await this.itemRepo.save(item);
     } else {
       item = this.itemRepo.create({
-        cart,
-        product,
+        cart: cart,
+        product: product,
         quantity,
         unitPrice: Number(product.price),
       });
       await this.itemRepo.save(item);
     }
-
     return this.getOrCreateCart(userId);
   }
 
