@@ -16,7 +16,10 @@ export class Users {
   password: string;
 
   @Column()
-  phone: number;
+  phone: string;
+
+  @Column()
+  avatar?: string;
 
   @Column({
     type: 'varchar',

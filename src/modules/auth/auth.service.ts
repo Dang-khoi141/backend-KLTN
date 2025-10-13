@@ -15,6 +15,7 @@ import { UserService } from '../user/user.service';
 import { Users } from '../user/entities/users.entity';
 import { UserRole } from '../user/enums/user-role.enum';
 import { UserDto } from '../user/dto/user.dto';
+import { OtpService } from './otp/otp.service';
 
 @Injectable()
 export class AuthService {
@@ -22,6 +23,7 @@ export class AuthService {
     private userService: UserService,
     private jwtService: JwtService,
     private configService: ConfigService,
+    private otpService: OtpService,
   ) {}
 
   async validateUser(email: string, password: string): Promise<Users> {
@@ -53,6 +55,7 @@ export class AuthService {
       throw new UnauthorizedException();
     }
   }
+
   public generateTokens(user: Users) {
     const payload: IJwtPayload = {
       id: user.id,
@@ -62,17 +65,74 @@ export class AuthService {
     };
 
     const accessToken = this.jwtService.sign(payload, {
-      secret: process.env.JWT_SECRET,
-      expiresIn: process.env.JWT_EXPIRES_IN || '15m',
+      secret: this.configService.get<string>('JWT_SECRET'),
+      expiresIn: this.configService.get<string>('JWT_EXPIRES_IN') || '15m',
     });
-    return { accessToken };
+
+    const refreshToken = this.jwtService.sign(payload, {
+      secret:
+        this.configService.get<string>('JWT_REFRESH_SECRET') ||
+        'refresh_secret_key',
+      expiresIn:
+        this.configService.get<string>('JWT_REFRESH_EXPIRES_IN') || '7d',
+    });
+
+    return {
+      accessToken,
+      refreshToken,
+    };
   }
+
+  public refreshTokens(refreshToken: string) {
+    try {
+      const payload = this.jwtService.verify<IJwtPayload>(refreshToken, {
+        secret:
+          this.configService.get<string>('JWT_REFRESH_SECRET') ||
+          'refresh_secret_key',
+      });
+
+      const newPayload: IJwtPayload = {
+        id: payload.id,
+        email: payload.email,
+        role: payload.role,
+        name: payload.name,
+      };
+
+      const newAccessToken = this.jwtService.sign(newPayload, {
+        secret: this.configService.get<string>('JWT_SECRET'),
+        expiresIn: this.configService.get<string>('JWT_EXPIRES_IN') || '15m',
+      });
+
+      const newRefreshToken = this.jwtService.sign(newPayload, {
+        secret:
+          this.configService.get<string>('JWT_REFRESH_SECRET') ||
+          'refresh_secret_key',
+        expiresIn:
+          this.configService.get<string>('JWT_REFRESH_EXPIRES_IN') || '7d',
+      });
+
+      return {
+        accessToken: newAccessToken,
+        refreshToken: newRefreshToken,
+      };
+    } catch (err) {
+      console.error('Refresh token error:', err);
+      throw new UnauthorizedException('Invalid or expired refreshToken');
+    }
+  }
+
   async register(dto: registerDTO) {
+    const isValidOtp = this.otpService.verifyOtp(dto.email, dto.otp);
+
+    if (!isValidOtp) {
+      throw new UnauthorizedException('Invalid or expired OTP');
+    }
+
     const data: UserDto = {
       ...dto,
       role: UserRole.CUSTOMER,
     };
-    const createRegister = await this.userService.create(data);
-    return createRegister;
+
+    return this.userService.create(data);
   }
 }

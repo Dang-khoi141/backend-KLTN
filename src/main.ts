@@ -1,17 +1,16 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
-import { VersioningType } from '@nestjs/common';
+import { ValidationPipe, VersioningType } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { CorsOptions } from '@nestjs/common/interfaces/external/cors-options.interface';
+import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 
 async function bootstrap() {
-  console.log('🚀 Starting NestJS application...');
-
+  // ==================================================
+  // Create the NestJS application
+  // ==================================================
   const app = await NestFactory.create(AppModule);
-  console.log('✅ NestJS application created successfully');
-
   const configService = app.get(ConfigService);
-  console.log('✅ ConfigService initialized');
 
   app.setGlobalPrefix('api');
   const apiVersion = configService.get<string>('API_VERSION') || '1';
@@ -19,17 +18,26 @@ async function bootstrap() {
     type: VersioningType.URI,
     defaultVersion: apiVersion,
   });
-  console.log(`📋 API versioning enabled with version: ${apiVersion}`);
 
+  // =========  start: server config  ========= //
   const port = configService.get<number>('PORT') || 3001;
   const host = configService.get<string>('HOST') || '0.0.0.0';
   const origin = configService.get<string>('ORIGIN') || '*';
+  // =========  end: server config  ========= //
 
-  console.log(`🔧 Configuration loaded:`);
-  console.log(`   - Port: ${port}`);
-  console.log(`   - Host: ${host}`);
-  console.log(`   - Origin: ${origin}`);
+  // =========  start: swagger config  ========= //
+  const swaggerConfig = new DocumentBuilder()
+    .setTitle('KLTN API')
+    .setDescription('API documentation for KLTN project')
+    .setVersion(apiVersion)
+    .addBearerAuth()
+    .build();
+  const document = SwaggerModule.createDocument(app, swaggerConfig);
+  SwaggerModule.setup('api/docs', app, document);
+  console.log('📚 Swagger enabled at /api/docs');
+  // =========  end: swagger config  ========= //
 
+  // =========  start: CORS config  ========= //
   const corsOptions: CorsOptions = {
     origin: origin === '*' ? '*' : [origin],
     methods: 'GET,HEAD,POST,PUT,PATCH,DELETE,OPTIONS',
@@ -37,14 +45,18 @@ async function bootstrap() {
     allowedHeaders:
       'Content-Type, Cache-Control, Authorization, X-Requested-With, Accept, X-XSRF-TOKEN, secret, recaptchavalue, sentry-trace, baggage',
   };
-
   app.enableCors(corsOptions);
+  // =========  end: CORS config  ========= //
 
-  console.log(
-    '🌐 CORS enabled with options:',
-    JSON.stringify(corsOptions, null, 2),
+  // =========  start: other middleware config  ========= //
+  app.useGlobalPipes(
+    new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true }),
   );
+  // =========  end: other middleware config  ========= //
 
+  // ==================================================
+  // Start the application
+  // ==================================================
   await app.listen(port, host);
   console.log(`🎉 Application is running on: http://${host}:${port}`);
   console.log(`📡 API endpoint: http://${host}:${port}/api/v${apiVersion}`);

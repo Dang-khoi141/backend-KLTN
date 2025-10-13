@@ -18,6 +18,12 @@ export class AuthController {
   async login(@Body() data: loginDTO) {
     return this.authService.login(data);
   }
+
+  @Post('refresh')
+  refresh(@Body('refreshToken') refreshToken: string) {
+    return this.authService.refreshTokens(refreshToken);
+  }
+
   @Post('register')
   async register(@Body() registerDto: registerDTO) {
     const user = await this.authService.register(registerDto);
