@@ -17,6 +17,8 @@ export class OrderService {
     @InjectRepository(Order) private readonly orderRepo: Repository<Order>,
     @InjectRepository(OrderItem)
     private readonly orderItemRepo: Repository<OrderItem>,
+    @InjectRepository(Users)
+    private readonly userRepo: Repository<Users>,
     private readonly cartService: CartService,
   ) {}
 
@@ -27,10 +29,15 @@ export class OrderService {
     const cart = await this.cartService.getOrCreateCart(userId);
     if (!cart.items?.length) throw new BadRequestException('Cart is empty');
 
+    const user = await this.userRepo.findOne({ where: { id: userId } });
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
     const orderNumber = this.generateOrderNumber();
 
     const order = this.orderRepo.create({
-      user: { id: userId } as Users,
+      user: user,
       orderNumber,
       status: OrderStatus.PENDING,
       total: 0,
