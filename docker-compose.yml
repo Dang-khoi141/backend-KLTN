@@ -1,0 +1,16 @@
+services:
+  backend:
+    build:
+      context: .
+    container_name: nestjs-backend
+    restart: unless-stopped
+    env_file:
+      - .env
+    ports:
+      - '${PORT}:3001'
+    networks:
+      - nestjs-network
+
+networks:
+  nestjs-network:
+    driver: bridge
