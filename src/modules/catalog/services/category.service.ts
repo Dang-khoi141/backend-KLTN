@@ -185,9 +185,9 @@ export class CategoryService {
       .innerJoin('orders', 'o', 'o.id = oi.order_id')
       .select('c.id', 'id')
       .addSelect('c.name', 'name')
-      .addSelect('c.image_url', 'imageUrl') // nếu có cột ảnh
+      .addSelect('c.image_url', 'imageUrl')
       .addSelect('COUNT(DISTINCT p.id)', 'totalProducts')
-      .where('o.status = :status', { status: 'COMPLETED' })
+      .where('o.status = :status', { status: 'DELIVERED' })
       .groupBy('c.id')
       .addGroupBy('c.name')
       .addGroupBy('c.image_url')

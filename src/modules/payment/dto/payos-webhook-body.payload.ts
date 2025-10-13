@@ -15,6 +15,7 @@ export interface PayosWebhookData {
   paymentLinkId: string;
   code: string;
   desc: string;
+  status: string;
 }
 
 export interface PayosWebhookBodyPayload {
