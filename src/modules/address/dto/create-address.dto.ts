@@ -5,13 +5,13 @@ export class CreateAddressDto {
   @IsNotEmpty()
   line1: string;
 
+  @IsOptional()
   @IsString()
-  @IsNotEmpty()
-  city: string;
+  city?: string;
 
+  @IsOptional()
   @IsString()
-  @IsNotEmpty()
-  province: string;
+  province?: string;
 
   @IsOptional()
   @IsString()
