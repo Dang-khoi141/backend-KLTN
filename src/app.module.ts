@@ -14,6 +14,7 @@ import { OtpModule } from './modules/auth/otp/otp.module';
 import { CatalogModule } from './modules/catalog/catalog.module';
 import { UploadModule } from './modules/uploads/upload.module';
 import { PaymentModule } from './modules/payment/payment.module';
+import { AddressModule } from './modules/address/address.module';
 
 @Module({
   imports: [
@@ -26,6 +27,7 @@ import { PaymentModule } from './modules/payment/payment.module';
     CatalogModule,
     UploadModule,
     PaymentModule,
+    AddressModule,
   ],
   controllers: [AppController],
   providers: [
