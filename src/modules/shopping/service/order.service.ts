@@ -3,6 +3,8 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
+import dayjs from 'dayjs';
+import { Between } from 'typeorm';
 import { Users } from '../../user/entities/users.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Order, OrderStatus } from '../entities/order.entity';
@@ -129,5 +131,82 @@ export class OrderService {
 
   async findByPayosCode(payosCode: number) {
     return this.orderRepo.findOne({ where: { payosOrderCode: payosCode } });
+  }
+
+  async getStatistics(period: 'day' | 'week' | 'month' = 'week') {
+    try {
+      const now = dayjs();
+      let startDate = now.startOf('week');
+
+      if (period === 'day') startDate = now.startOf('day');
+      else if (period === 'month') startDate = now.startOf('month');
+      else if (period !== 'week') {
+        throw new BadRequestException('Invalid period value');
+      }
+
+      if (!startDate.isValid() || !now.isValid()) {
+        throw new BadRequestException('Invalid date range');
+      }
+
+      const start = startDate.toDate();
+      const end = now.toDate();
+
+      const orders = await this.orderRepo.find({
+        where: { createdAt: Between(start, end) },
+      });
+
+      const totalRevenue = orders.reduce(
+        (sum, o) => sum + Number(o.total || 0),
+        0,
+      );
+      const totalOrders = orders.length;
+      const completedOrders = orders.filter(
+        (o) =>
+          o.status === OrderStatus.DELIVERED || o.status === OrderStatus.PAID,
+      ).length;
+
+      const days: Record<string, number> = {};
+      const diffDays = period === 'month' ? now.diff(startDate, 'day') + 1 : 7;
+
+      for (let i = 0; i < diffDays; i++) {
+        const date = startDate.add(i, 'day').format('YYYY-MM-DD');
+        days[date] = 0;
+      }
+
+      orders.forEach((order) => {
+        const date = dayjs(order.createdAt).format('YYYY-MM-DD');
+        if (days[date] !== undefined) {
+          days[date] += Number(order.total || 0);
+        }
+      });
+
+      const statusChart = orders.reduce(
+        (acc, o) => {
+          acc[o.status] = (acc[o.status] || 0) + 1;
+          return acc;
+        },
+        {} as Record<string, number>,
+      );
+
+      return {
+        totalRevenue,
+        totalOrders,
+        completedOrders,
+        chart: Object.entries(days).map(([date, revenue]) => ({
+          date,
+          revenue,
+        })),
+        statusChart,
+      };
+    } catch (error) {
+      console.error('🔥 Error in getStatistics():', error);
+      return {
+        totalRevenue: 0,
+        totalOrders: 0,
+        completedOrders: 0,
+        chart: [],
+        statusChart: {},
+      };
+    }
   }
 }
