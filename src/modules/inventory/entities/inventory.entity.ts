@@ -1,7 +1,7 @@
 import { Entity, PrimaryColumn, Column, OneToOne, JoinColumn } from 'typeorm';
 import { Product } from '../../catalog/entities/product.entity';
 
-@Entity({ name: 'inventory', synchronize: true })
+@Entity({ name: 'inventory', synchronize: false })
 export class Inventory {
   @PrimaryColumn('uuid', { name: 'product_id' })
   productId: string;

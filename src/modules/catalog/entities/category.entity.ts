@@ -11,7 +11,7 @@ import {
 } from 'typeorm';
 import { Product } from './product.entity';
 
-@Entity({ name: 'categories', synchronize: true })
+@Entity({ name: 'categories', synchronize: false })
 @Index(['name'])
 export class Category {
   @PrimaryGeneratedColumn('uuid')

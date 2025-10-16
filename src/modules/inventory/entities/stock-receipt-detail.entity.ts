@@ -8,7 +8,7 @@ import {
 import { StockReceipt } from './stock-receipt.entity';
 import { Product } from '../../catalog/entities/product.entity';
 
-@Entity({ name: 'stockreceiptdetails', synchronize: true })
+@Entity({ name: 'stockreceiptdetails', synchronize: false })
 export class StockReceiptDetail {
   @PrimaryGeneratedColumn('uuid')
   id: string;

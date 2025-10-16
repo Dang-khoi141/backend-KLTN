@@ -8,7 +8,7 @@ import {
 import { InventoryCheck } from './inventory-check.entity';
 import { Product } from '../../catalog/entities/product.entity';
 
-@Entity({ name: 'inventorycheckdetails', synchronize: true })
+@Entity({ name: 'inventorycheckdetails', synchronize: false })
 export class InventoryCheckDetail {
   @PrimaryGeneratedColumn('uuid')
   id: string;

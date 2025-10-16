@@ -8,7 +8,7 @@ import {
 import { StockIssue } from './stock-issue.entity';
 import { Product } from '../../catalog/entities/product.entity';
 
-@Entity({ name: 'stockissuedetails', synchronize: true })
+@Entity({ name: 'stockissuedetails', synchronize: false })
 export class StockIssueDetail {
   @PrimaryGeneratedColumn('uuid')
   id: string;

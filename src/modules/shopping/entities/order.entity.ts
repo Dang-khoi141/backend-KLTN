@@ -10,6 +10,7 @@ import {
 } from 'typeorm';
 import { OrderItem } from './order-item.entity';
 import { Users } from '../../user/entities/users.entity';
+import { Promotion } from '../../promotion/entities/promotion.entity';
 
 export enum OrderStatus {
   PENDING = 'PENDING',
@@ -20,7 +21,7 @@ export enum OrderStatus {
   CANCELED = 'CANCELED',
 }
 
-@Entity({ name: 'orders', synchronize: true })
+@Entity({ name: 'orders', synchronize: false })
 export class Order {
   @PrimaryGeneratedColumn('uuid')
   id: string;
@@ -60,6 +61,13 @@ export class Order {
 
   @Column({ nullable: true, name: 'payos_order_code' })
   payosOrderCode?: number;
+
+  @ManyToOne(() => Promotion, { nullable: true })
+  @JoinColumn({ name: 'promotion_id' })
+  promotion?: Promotion;
+
+  @Column({ type: 'decimal', precision: 10, scale: 0, nullable: true })
+  discountAmount?: number;
 
   @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;

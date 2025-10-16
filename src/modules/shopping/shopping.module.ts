@@ -11,6 +11,7 @@ import { OrderService } from './service/order.service';
 import { CartService } from './service/cart.service';
 import { CartController } from './controller/cart.controller';
 import { OrderController } from './controller/order.controller';
+import { Promotion } from '../promotion/entities/promotion.entity';
 
 @Module({
   imports: [
@@ -21,6 +22,7 @@ import { OrderController } from './controller/order.controller';
       OrderItem,
       Product,
       Users,
+      Promotion,
     ]),
   ],
   providers: [CartService, OrderService],

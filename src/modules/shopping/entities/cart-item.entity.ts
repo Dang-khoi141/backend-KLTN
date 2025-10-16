@@ -8,7 +8,7 @@ import {
 import { Cart } from './cart.entity';
 import { Product } from '../../catalog/entities/product.entity';
 
-@Entity({ name: 'cart_items', synchronize: true })
+@Entity({ name: 'cart_items', synchronize: false })
 export class CartItem {
   @PrimaryGeneratedColumn('uuid')
   id: string;

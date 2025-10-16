@@ -9,7 +9,7 @@ import {
 } from 'typeorm';
 import { Product } from './product.entity';
 
-@Entity({ name: 'brands', synchronize: true })
+@Entity({ name: 'brands', synchronize: false })
 @Index(['name'])
 export class Brand {
   @PrimaryGeneratedColumn('uuid')

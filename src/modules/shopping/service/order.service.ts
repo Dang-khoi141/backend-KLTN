@@ -12,6 +12,7 @@ import { Repository, DeepPartial } from 'typeorm';
 import { OrderItem } from '../entities/order-item.entity';
 import { CartService } from './cart.service';
 import { CreateOrderDto } from '../dto/create-order.dto';
+import { Promotion } from '../../promotion/entities/promotion.entity';
 
 @Injectable()
 export class OrderService {
@@ -21,6 +22,8 @@ export class OrderService {
     private readonly orderItemRepo: Repository<OrderItem>,
     @InjectRepository(Users)
     private readonly userRepo: Repository<Users>,
+    @InjectRepository(Promotion)
+    private readonly promoRepo: Repository<Promotion>,
     private readonly cartService: CartService,
   ) {}
 
@@ -59,6 +62,46 @@ export class OrderService {
         unitPrice,
       });
     });
+
+    let discountAmount = 0;
+
+    if (dto.promotionCode) {
+      const promotion = await this.promoRepo.findOne({
+        where: { code: dto.promotionCode, isActive: true },
+      });
+
+      if (!promotion) {
+        throw new BadRequestException('Invalid promotion code');
+      }
+
+      const now = new Date();
+      if (
+        (promotion.startDate && now < promotion.startDate) ||
+        (promotion.endDate && now > promotion.endDate)
+      ) {
+        throw new BadRequestException('Promotion code expired or inactive');
+      }
+
+      if (promotion.minOrderValue && total < Number(promotion.minOrderValue)) {
+        throw new BadRequestException(
+          `Minimum order value for this promotion is ${promotion.minOrderValue}₫`,
+        );
+      }
+
+      if (promotion.discountPercent) {
+        discountAmount = Math.floor(
+          (total * Number(promotion.discountPercent)) / 100,
+        );
+      } else if (promotion.discountAmount) {
+        discountAmount = Number(promotion.discountAmount);
+      }
+
+      total -= discountAmount;
+
+      (order as any).promotion = promotion;
+      (order as any).discountAmount = discountAmount;
+    }
+
     order.total = Number(total.toFixed(2));
 
     const saved = await this.orderRepo.save(order);
@@ -67,7 +110,7 @@ export class OrderService {
 
     const result = await this.orderRepo.findOne({
       where: { id: saved.id },
-      relations: ['items', 'items.product'],
+      relations: ['items', 'items.product', 'promotion'],
     });
     if (!result) throw new NotFoundException('Order not found after save');
     return result;
@@ -199,7 +242,7 @@ export class OrderService {
         statusChart,
       };
     } catch (error) {
-      console.error('🔥 Error in getStatistics():', error);
+      console.error(' Error in getStatistics():', error);
       return {
         totalRevenue: 0,
         totalOrders: 0,

@@ -15,6 +15,8 @@ import { CatalogModule } from './modules/catalog/catalog.module';
 import { UploadModule } from './modules/uploads/upload.module';
 import { PaymentModule } from './modules/payment/payment.module';
 import { AddressModule } from './modules/address/address.module';
+import { PromotionController } from './modules/promotion/promotion.controller';
+import { PromotionModule } from './modules/promotion/promotion.module';
 
 @Module({
   imports: [
@@ -28,8 +30,9 @@ import { AddressModule } from './modules/address/address.module';
     UploadModule,
     PaymentModule,
     AddressModule,
+    PromotionModule,
   ],
-  controllers: [AppController],
+  controllers: [AppController, PromotionController],
   providers: [
     AppService,
     {

@@ -9,7 +9,7 @@ import {
 import { Warehouse } from './warehouse.entity';
 import { InventoryCheckDetail } from './inventory-check-detail.entity';
 
-@Entity({ name: 'inventorychecks', synchronize: true })
+@Entity({ name: 'inventorychecks', synchronize: false })
 export class InventoryCheck {
   @PrimaryGeneratedColumn('uuid')
   id: string;
