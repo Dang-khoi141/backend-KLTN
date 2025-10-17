@@ -18,25 +18,28 @@ import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { OrderStatus } from '../entities/order.entity';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { UserRole } from '../../user/enums/user-role.enum';
+import { RolesGuard } from '../../auth/guards/roles.guard';
 
 @Controller('orders')
-// @UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, RolesGuard)
 export class OrderController {
   constructor(private readonly orderService: OrderService) {}
 
   @Post('create')
+  @Roles(UserRole.CUSTOMER)
   @ResponseMessage('Order created successfully')
   create(@CurrentUser('userId') userId: string, @Body() dto: CreateOrderDto) {
     return this.orderService.createOrderFromCart(userId, dto);
   }
 
   @Get('my-orders')
+  @Roles(UserRole.CUSTOMER)
   @ResponseMessage('User orders retrieved successfully')
   listMyOrders(@CurrentUser('userId') userId: string) {
     return this.orderService.listUserOrders(userId);
   }
 
-  // @Roles(UserRole.ADMIN, UserRole.SUPERADMIN)
+  @Roles(UserRole.ADMIN, UserRole.SUPERADMIN)
   @Get('statistics')
   @ResponseMessage('Order statistics retrieved successfully')
   getStatistics(@Query('period') period: 'day' | 'week' | 'month' = 'week') {
@@ -44,6 +47,7 @@ export class OrderController {
   }
 
   @Get(':orderId')
+  @Roles(UserRole.CUSTOMER)
   @ResponseMessage('Order retrieved successfully')
   async getOrderDetail(
     @CurrentUser('userId') userId: string,
@@ -54,6 +58,7 @@ export class OrderController {
   }
 
   @Patch(':orderId/status/:status')
+  @Roles(UserRole.ADMIN, UserRole.SUPERADMIN)
   @ResponseMessage('Order status updated successfully')
   updateStatus(
     @Param('orderId', new ParseUUIDPipe()) orderId: string,
@@ -69,6 +74,7 @@ export class OrderController {
   }
 
   @Patch(':orderId/cancel')
+  @Roles(UserRole.CUSTOMER)
   @ResponseMessage('Order canceled successfully')
   cancelOrder(
     @CurrentUser('userId') userId: string,

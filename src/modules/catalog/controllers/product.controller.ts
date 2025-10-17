@@ -22,6 +22,9 @@ import { ProductQueryDto } from '../dto/product-query.dto';
 import { JwtAuthGuard } from '../../auth/guards/jwt.guard';
 import { CreatePaymentDto } from '../../payment/types/dto';
 import { PaymentService } from '../../payment/payment.service';
+import { RolesGuard } from '../../auth/guards/roles.guard';
+import { Roles } from '../../common/decorators/roles.decorator';
+import { UserRole } from '../../user/enums/user-role.enum';
 
 @ApiTags('Products')
 @Controller('products')
@@ -31,7 +34,8 @@ export class ProductController {
     private readonly paymentService: PaymentService,
   ) {}
   @Post()
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.ADMIN, UserRole.SUPERADMIN)
   @ResponseMessage('Product created successfully')
   @ApiConsumes('multipart/form-data')
   @ApiBody({ type: CreateProductDto })
@@ -61,7 +65,8 @@ export class ProductController {
   }
 
   @Patch(':id')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.ADMIN, UserRole.SUPERADMIN)
   @ResponseMessage('Product updated successfully')
   @ApiConsumes('multipart/form-data')
   @ApiBody({ type: UpdateProductDto })
@@ -75,13 +80,16 @@ export class ProductController {
   }
 
   @Delete(':id')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.ADMIN, UserRole.SUPERADMIN)
   @ResponseMessage('Product deleted successfully')
   remove(@Param('id', ParseUUIDPipe) id: string) {
     return this.productService.remove(id);
   }
 
   @Get(':id/pay')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.CUSTOMER)
   async createPaymentForProduct(@Param('id') id: string) {
     const product = await this.productService.findOne(id);
 
