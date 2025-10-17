@@ -16,6 +16,9 @@ import { CreateBrandDto } from '../dto/create-brand.dto';
 import { UpdateBrandDto } from '../dto/update-brand.dto';
 import { BrandService } from '../services/brand.service';
 import { JwtAuthGuard } from '../../auth/guards/jwt.guard';
+import { Roles } from '../../common/decorators/roles.decorator';
+import { RolesGuard } from '../../auth/guards/roles.guard';
+import { UserRole } from '../../user/enums/user-role.enum';
 
 @ApiTags('Brands')
 @Controller('brands')
@@ -23,7 +26,8 @@ export class BrandController {
   constructor(private readonly brandService: BrandService) {}
 
   @Post()
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.ADMIN, UserRole.SUPERADMIN)
   @ResponseMessage('Brand created successfully')
   @ApiBody({ type: CreateBrandDto })
   create(@Body() dto: CreateBrandDto) {
@@ -56,7 +60,8 @@ export class BrandController {
   }
 
   @Patch(':id')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.ADMIN, UserRole.SUPERADMIN)
   @ResponseMessage('Brand updated successfully')
   @ApiBody({ type: UpdateBrandDto })
   update(@Param('id', ParseUUIDPipe) id: string, @Body() dto: UpdateBrandDto) {
@@ -64,7 +69,8 @@ export class BrandController {
   }
 
   @Delete(':id')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.ADMIN, UserRole.SUPERADMIN)
   @ResponseMessage('Brand deleted successfully')
   remove(@Param('id', ParseUUIDPipe) id: string) {
     return this.brandService.remove(id);

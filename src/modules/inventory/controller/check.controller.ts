@@ -11,9 +11,13 @@ import { CreateCheckDto } from '../dto/create-check.dto';
 import { CheckService } from '../service/check.service';
 import { ResponseMessage } from 'src/modules/common/decorators/response-message.decorator';
 import { JwtAuthGuard } from '../../auth/guards/jwt.guard';
+import { RolesGuard } from '../../auth/guards/roles.guard';
+import { Roles } from '../../common/decorators/roles.decorator';
+import { UserRole } from '../../user/enums/user-role.enum';
 
 @Controller('inventory/checks')
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, RolesGuard)
+@Roles(UserRole.ADMIN, UserRole.SUPERADMIN)
 export class CheckController {
   constructor(private readonly checkService: CheckService) {}
 

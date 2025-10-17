@@ -16,6 +16,9 @@ import { CreateCategoryDto } from '../dto/create-category.dto';
 import { UpdateCategoryDto } from '../dto/update-category.dto';
 import { CategoryService } from '../services/category.service';
 import { JwtAuthGuard } from '../../auth/guards/jwt.guard';
+import { RolesGuard } from '../../auth/guards/roles.guard';
+import { Roles } from '../../common/decorators/roles.decorator';
+import { UserRole } from '../../user/enums/user-role.enum';
 
 @ApiTags('Categories')
 @Controller('categories')
@@ -23,7 +26,8 @@ export class CategoryController {
   constructor(private readonly categoryService: CategoryService) {}
 
   @Post()
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.SUPERADMIN, UserRole.ADMIN)
   @ResponseMessage('Category created successfully')
   @ApiBody({ type: CreateCategoryDto })
   create(@Body() dto: CreateCategoryDto) {
@@ -65,7 +69,8 @@ export class CategoryController {
   }
 
   @Patch(':id')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.SUPERADMIN, UserRole.ADMIN)
   @ResponseMessage('Category updated successfully')
   @ApiBody({ type: UpdateCategoryDto })
   update(
@@ -76,7 +81,8 @@ export class CategoryController {
   }
 
   @Delete(':id')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.SUPERADMIN, UserRole.ADMIN)
   @ResponseMessage('Category deleted successfully')
   remove(@Param('id', ParseUUIDPipe) id: string) {
     return this.categoryService.remove(id);
