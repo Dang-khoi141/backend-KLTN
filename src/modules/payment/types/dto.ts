@@ -8,6 +8,7 @@ export interface CreatePaymentDto {
     price: number;
     quantity: number;
   }[];
+  discountAmount?: number;
 }
 
 export interface Payment {

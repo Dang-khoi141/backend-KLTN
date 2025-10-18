@@ -46,6 +46,7 @@ export class OrderService {
       orderNumber,
       status: OrderStatus.PENDING,
       total: 0,
+      discountAmount: 0,
       items: [],
       paymentMethod: dto.paymentMethod || 'COD',
       shippingAddress: dto.shippingAddress,
@@ -64,9 +65,10 @@ export class OrderService {
     });
 
     let discountAmount = 0;
+    let promotion: Promotion | null = null;
 
     if (dto.promotionCode) {
-      const promotion = await this.promoRepo.findOne({
+      promotion = await this.promoRepo.findOne({
         where: { code: dto.promotionCode, isActive: true },
       });
 
@@ -98,10 +100,10 @@ export class OrderService {
 
       total -= discountAmount;
 
-      (order as any).promotion = promotion;
-      (order as any).discountAmount = discountAmount;
+      order.promotion = promotion;
     }
 
+    order.discountAmount = discountAmount;
     order.total = Number(total.toFixed(2));
 
     const saved = await this.orderRepo.save(order);

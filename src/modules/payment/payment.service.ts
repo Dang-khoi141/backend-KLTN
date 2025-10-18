@@ -20,10 +20,14 @@ export class PaymentService {
   async createPayment(body: CreatePaymentDto): Promise<any> {
     const url = `https://api-merchant.payos.vn/v2/payment-requests`;
 
-    const totalAmount = body.items.reduce(
+    let totalAmount = body.items.reduce(
       (sum, item) => sum + item.price * item.quantity,
       0,
     );
+
+    if (body.discountAmount && body.discountAmount > 0) {
+      totalAmount = Math.max(0, totalAmount - Number(body.discountAmount));
+    }
     const shortOrderId = body.orderId.slice(-8);
     const desc = `DH-${shortOrderId}-${Date.now().toString().slice(-4)}`;
     const frontendUrl =
