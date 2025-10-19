@@ -25,6 +25,13 @@ import { RolesGuard } from '../../auth/guards/roles.guard';
 export class OrderController {
   constructor(private readonly orderService: OrderService) {}
 
+  @Get()
+  @Roles(UserRole.ADMIN, UserRole.SUPERADMIN)
+  @ResponseMessage('All orders retrieved successfully')
+  getAllOrders() {
+    return this.orderService.getAllOrders();
+  }
+
   @Post('create')
   @Roles(UserRole.CUSTOMER)
   @ResponseMessage('Order created successfully')
@@ -55,6 +62,15 @@ export class OrderController {
   ) {
     const order = await this.orderService.getOrderDetail(userId, orderId);
     return order;
+  }
+
+  @Get('admin/:orderId')
+  @Roles(UserRole.ADMIN, UserRole.SUPERADMIN)
+  @ResponseMessage('Order retrieved successfully')
+  async getOrderDetailAdmin(
+    @Param('orderId', new ParseUUIDPipe()) orderId: string,
+  ) {
+    return this.orderService.getOrderDetailAdmin(orderId);
   }
 
   @Patch(':orderId/status/:status')

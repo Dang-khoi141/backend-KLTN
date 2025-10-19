@@ -27,6 +27,13 @@ export class OrderService {
     private readonly cartService: CartService,
   ) {}
 
+  async getAllOrders(): Promise<Order[]> {
+    return this.orderRepo.find({
+      relations: ['user', 'items', 'items.product', 'promotion'],
+      order: { createdAt: 'DESC' },
+    });
+  }
+
   async createOrderFromCart(
     userId: string,
     dto: CreateOrderDto,
@@ -130,6 +137,14 @@ export class OrderService {
     const order = await this.orderRepo.findOne({
       where: { id: orderId, user: { id: userId } },
       relations: ['items', 'items.product'],
+    });
+    if (!order) throw new NotFoundException('Order not found');
+    return order;
+  }
+  async getOrderDetailAdmin(orderId: string): Promise<Order> {
+    const order = await this.orderRepo.findOne({
+      where: { id: orderId },
+      relations: ['items', 'items.product', 'user'],
     });
     if (!order) throw new NotFoundException('Order not found');
     return order;
