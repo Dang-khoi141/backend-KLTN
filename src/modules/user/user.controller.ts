@@ -47,7 +47,7 @@ export class UserController {
   }
 
   @Get(':id')
-  @Roles(UserRole.ADMIN, UserRole.SUPERADMIN)
+  @Roles(UserRole.ADMIN, UserRole.SUPERADMIN, UserRole.AGENT, UserRole.CUSTOMER)
   async findOne(@Param('id') id: string): Promise<Users> {
     const Usersid = await this.userService.findOneById(id);
     if (!Usersid) {
@@ -65,7 +65,7 @@ export class UserController {
     return this.userService.update(id, updateAdminUserDto);
   }
 
-  @Patch(':id')
+  @Patch('me/:id')
   @Roles(UserRole.ADMIN, UserRole.AGENT, UserRole.CUSTOMER)
   async update(
     @Param('id') id: string,
@@ -81,6 +81,7 @@ export class UserController {
   }
 
   @Get('email/:email')
+  @Roles(UserRole.ADMIN, UserRole.SUPERADMIN, UserRole.AGENT, UserRole.CUSTOMER)
   async findByEmail(@Param('email') email: string): Promise<Users> {
     const user = await this.userService.findByEmail(email);
     if (!user) {
