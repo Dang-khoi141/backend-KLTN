@@ -17,6 +17,8 @@ import { ReceiptController } from './controller/receipt.controller';
 import { IssueController } from './controller/issue.controller';
 import { CheckController } from './controller/check.controller';
 import { InventoryController } from './controller/inventory.controller';
+import { Product } from '../catalog/entities/product.entity';
+import { CatalogModule } from '../catalog/catalog.module';
 
 @Module({
   imports: [
@@ -29,7 +31,9 @@ import { InventoryController } from './controller/inventory.controller';
       InventoryCheckDetail,
       Inventory,
       Warehouse,
+      Product,
     ]),
+    CatalogModule,
   ],
   providers: [ReceiptService, IssueService, CheckService, InventoryService],
   controllers: [
