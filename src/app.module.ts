@@ -17,6 +17,7 @@ import { PaymentModule } from './modules/payment/payment.module';
 import { AddressModule } from './modules/address/address.module';
 import { PromotionController } from './modules/promotion/promotion.controller';
 import { PromotionModule } from './modules/promotion/promotion.module';
+import { OpenAIModule } from './modules/ai/ai.module';
 
 @Module({
   imports: [
@@ -31,6 +32,7 @@ import { PromotionModule } from './modules/promotion/promotion.module';
     PaymentModule,
     AddressModule,
     PromotionModule,
+    OpenAIModule,
   ],
   controllers: [AppController, PromotionController],
   providers: [

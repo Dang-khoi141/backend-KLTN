@@ -61,4 +61,17 @@ export class PromotionService {
       promotion: promo,
     };
   }
+  async getActivePromotions() {
+    const now = new Date();
+
+    const promos = await this.promoRepo
+      .createQueryBuilder('promo')
+      .where('promo.isActive = :active', { active: true })
+      .andWhere('(promo.startDate IS NULL OR promo.startDate <= :now)', { now })
+      .andWhere('(promo.endDate IS NULL OR promo.endDate >= :now)', { now })
+      .orderBy('promo.createdAt', 'DESC')
+      .getMany();
+
+    return promos;
+  }
 }
