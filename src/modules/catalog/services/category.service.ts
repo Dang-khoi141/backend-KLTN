@@ -4,7 +4,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, ILike } from 'typeorm';
 import { CreateCategoryDto } from '../dto/create-category.dto';
 import { UpdateCategoryDto } from '../dto/update-category.dto';
 import { Category } from '../entities/category.entity';
@@ -194,5 +194,19 @@ export class CategoryService {
       .orderBy('COUNT(DISTINCT p.id)', 'DESC')
       .limit(limit)
       .getRawMany();
+  }
+
+  async findByName(name: string): Promise<Category | null> {
+    return this.categoryRepository.findOne({
+      where: { name: ILike(name) },
+    });
+  }
+
+  async createSimple(name: string): Promise<Category> {
+    const category = this.categoryRepository.create({
+      name,
+      description: 'Auto created from import',
+    });
+    return this.categoryRepository.save(category);
   }
 }

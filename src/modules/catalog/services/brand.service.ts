@@ -4,7 +4,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { DeepPartial, Repository } from 'typeorm';
+import { DeepPartial, Repository, ILike } from 'typeorm';
 import { CreateBrandDto } from '../dto/create-brand.dto';
 import { UpdateBrandDto } from '../dto/update-brand.dto';
 import { Brand } from '../entities/brand.entity';
@@ -108,5 +108,19 @@ export class BrandService {
     }
 
     await this.brandRepository.delete(id);
+  }
+
+  async findByName(name: string): Promise<Brand | null> {
+    return this.brandRepository.findOne({
+      where: { name: ILike(name) },
+    });
+  }
+
+  async createSimple(name: string): Promise<Brand> {
+    const brand = this.brandRepository.create({
+      name,
+      contactName: 'Auto created',
+    });
+    return this.brandRepository.save(brand);
   }
 }
