@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { S3Service } from '../../uploads/upload.service';
@@ -10,6 +14,7 @@ import { CategoryService } from './category.service';
 import { BrandService } from './brand.service';
 import { Brand } from '../entities/brand.entity';
 import { ProductQueryDto } from '../dto/product-query.dto';
+import * as XLSX from 'xlsx';
 
 @Injectable()
 export class ProductService {
@@ -170,5 +175,84 @@ export class ProductService {
 
   private async getDefaultBrand(): Promise<Brand> {
     return this.brandService.findOrCreateDefault();
+  }
+
+  async importFromExcel(file: Express.Multer.File) {
+    if (!file) throw new BadRequestException('No file uploaded');
+
+    const workbook = XLSX.read(file.buffer, { type: 'buffer' });
+    const worksheet = workbook.Sheets[workbook.SheetNames[0]];
+    const rows = XLSX.utils.sheet_to_json<Record<string, any>>(worksheet);
+
+    if (!rows || rows.length === 0) {
+      throw new BadRequestException('Excel file is empty');
+    }
+
+    const importedProducts: Product[] = [];
+
+    for (const row of rows) {
+      const name = row['name'] || row['Tên sản phẩm'];
+      const price = Number(row['price'] || row['Giá']);
+      const description = row['description'] || row['Mô tả'] || '';
+      const imageUrl = row['imageUrl'] || row['Ảnh URL'];
+      const categoryName = row['categoryName'] || row['Danh mục'];
+      const brandName = row['brandName'] || row['Thương hiệu'];
+
+      if (!name || !price) {
+        throw new BadRequestException(`Thiếu dữ liệu: ${JSON.stringify(row)}`);
+      }
+
+      let uploadedImageUrl: string | undefined;
+      if (imageUrl) {
+        try {
+          uploadedImageUrl = await this.s3Service.uploadFromUrl(
+            imageUrl,
+            'products',
+          );
+        } catch (e) {
+          console.warn(`⚠️ Upload thất bại cho ảnh: ${imageUrl}`);
+        }
+      }
+
+      let category = await this.getDefaultCategory();
+      if (categoryName) {
+        const existingCat = await this.categoryService.findByName(categoryName);
+        if (existingCat) {
+          category = existingCat;
+        } else {
+          category = await this.categoryService.createSimple(categoryName);
+          console.log(`✅ Category mới tạo: ${categoryName}`);
+        }
+      }
+
+      let brand = await this.getDefaultBrand();
+      if (brandName) {
+        const existingBrand = await this.brandService.findByName(brandName);
+        if (existingBrand) {
+          brand = existingBrand;
+        } else {
+          brand = await this.brandService.createSimple(brandName);
+          console.log(`✅ Brand mới tạo: ${brandName}`);
+        }
+      }
+
+      const product = this.productRepository.create({
+        name,
+        price,
+        description,
+        image: uploadedImageUrl,
+        category,
+        brand,
+      });
+
+      importedProducts.push(product);
+    }
+
+    await this.productRepository.save(importedProducts);
+
+    return {
+      message: 'Import sản phẩm thành công',
+      importedCount: importedProducts.length,
+    };
   }
 }
