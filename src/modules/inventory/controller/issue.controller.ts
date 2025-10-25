@@ -24,7 +24,7 @@ export class IssueController {
   @Post()
   @ResponseMessage('Issue created successfully')
   async create(@Body() dto: CreateIssueDto, @Req() req: any) {
-    const userId = req.user?.id || 'system';
+    const userId = req.user?.userId || req.user?.id;
     return this.issueService.createIssue(dto, userId);
   }
 
