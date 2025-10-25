@@ -24,7 +24,7 @@ export class ReceiptController {
   @Post()
   @ResponseMessage('Receipt created successfully')
   async create(@Body() dto: CreateReceiptDto, @Req() req: any) {
-    const userId = req.user?.id || 'system';
+    const userId = req.user?.userId || req.user?.id;
     return this.receiptService.createReceipt(dto, userId);
   }
 
