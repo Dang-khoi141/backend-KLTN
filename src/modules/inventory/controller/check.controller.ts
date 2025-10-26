@@ -24,7 +24,7 @@ export class CheckController {
   @Post()
   @ResponseMessage('Check created successfully')
   async create(@Body() dto: CreateCheckDto, @Req() req: any) {
-    const userId = req.user?.id || 'system';
+    const userId = req.user?.userId || req.user?.id;
     return this.checkService.createCheck(dto, userId);
   }
 
