@@ -22,5 +22,6 @@ import { PaymentModule } from '../payment/payment.module';
   ],
   providers: [CategoryService, BrandService, ProductService],
   controllers: [CategoryController, BrandController, ProductController],
+  exports: [ProductService],
 })
 export class CatalogModule {}

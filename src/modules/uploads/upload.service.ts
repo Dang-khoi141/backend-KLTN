@@ -3,7 +3,7 @@ import {
   PutObjectCommand,
   S3Client,
 } from '@aws-sdk/client-s3';
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import axios from 'axios';
 import { v4 as uuid } from 'uuid';
 
@@ -76,5 +76,35 @@ export class S3Service {
     });
 
     await this.s3.send(command);
+  }
+
+  async upload(
+    fileOrUrl: Express.Multer.File | string,
+    folder: string = 'uploads',
+  ) {
+    try {
+      if (typeof fileOrUrl === 'string') {
+        return await this.uploadFromUrl(fileOrUrl, folder);
+      } else if (fileOrUrl && (fileOrUrl as Express.Multer.File).buffer) {
+        return await this.uploadFile(fileOrUrl as Express.Multer.File, folder);
+      } else {
+        throw new BadRequestException('Dữ liệu không hợp lệ để upload');
+      }
+    } catch (error) {
+      console.error('❌ Upload failed:', error.message);
+      throw new BadRequestException('Không thể upload lên S3');
+    }
+  }
+
+  async uploadMultiple(
+    files: (Express.Multer.File | string)[],
+    folder: string = 'uploads',
+  ) {
+    const results: string[] = [];
+    for (const item of files) {
+      const url = await this.upload(item, folder);
+      results.push(url);
+    }
+    return results;
   }
 }

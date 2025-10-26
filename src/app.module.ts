@@ -18,6 +18,8 @@ import { AddressModule } from './modules/address/address.module';
 import { PromotionController } from './modules/promotion/promotion.controller';
 import { PromotionModule } from './modules/promotion/promotion.module';
 import { OpenAIModule } from './modules/ai/ai.module';
+import { ReviewsController } from './modules/reviews/reviews.controller';
+import { ReviewsModule } from './modules/reviews/reviews.module';
 
 @Module({
   imports: [
@@ -33,8 +35,9 @@ import { OpenAIModule } from './modules/ai/ai.module';
     AddressModule,
     PromotionModule,
     OpenAIModule,
+    ReviewsModule,
   ],
-  controllers: [AppController, PromotionController],
+  controllers: [AppController, PromotionController, ReviewsController],
   providers: [
     AppService,
     {
