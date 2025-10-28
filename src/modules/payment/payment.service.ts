@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
 import { ConfigService } from '@nestjs/config';
 import { firstValueFrom } from 'rxjs';
@@ -11,6 +11,8 @@ import { OrderStatus } from '../shopping/entities/order.entity';
 
 @Injectable()
 export class PaymentService {
+  private paymentTimeouts = new Map<string, NodeJS.Timeout>();
+
   constructor(
     private readonly httpService: HttpService,
     private readonly configService: ConfigService,
@@ -73,12 +75,46 @@ export class PaymentService {
 
     await this.orderService.updatePayosCode(body.orderId, orderCode);
 
+    this.schedulePaymentCancellation(body.orderId, orderCode);
+
     return {
       message: 'Tạo mã QR thanh toán thành công',
       totalAmount,
       orderId: body.orderId,
       payosResponse: response.data,
     };
+  }
+
+  private schedulePaymentCancellation(orderId: string, orderCode: number) {
+    if (this.paymentTimeouts.has(orderId)) {
+      clearTimeout(this.paymentTimeouts.get(orderId));
+    }
+
+    const timeout = setTimeout(
+      () => {
+        void (async () => {
+          try {
+            const order = await this.orderService.findByPayosCode(orderCode);
+
+            if (order && order.status === OrderStatus.PENDING) {
+              await this.orderService.updateStatus(
+                orderId,
+                OrderStatus.CANCELED,
+              );
+
+              await this.cancelPaymentOnPayOS(orderCode);
+            }
+
+            this.paymentTimeouts.delete(orderId);
+          } catch (error) {
+            console.error(`Error auto-cancelling order ${orderId}:`, error);
+          }
+        })();
+      },
+      15 * 60 * 1000,
+    );
+
+    this.paymentTimeouts.set(orderId, timeout);
   }
 
   async handleWebhook(body: PayosWebhookBodyPayload) {
@@ -97,6 +133,11 @@ export class PaymentService {
 
     if (isPaid && order.status !== OrderStatus.PAID) {
       await this.orderService.updateStatus(order.id, OrderStatus.PAID);
+
+      if (this.paymentTimeouts.has(order.id)) {
+        clearTimeout(this.paymentTimeouts.get(order.id));
+        this.paymentTimeouts.delete(order.id);
+      }
     }
 
     return { received: true };
@@ -118,6 +159,56 @@ export class PaymentService {
     } catch (error) {
       console.error('Error checking payment status:', error);
       throw error;
+    }
+  }
+
+  async cancelPayment(orderId: string): Promise<any> {
+    try {
+      const order = await this.orderService.getOrderDetailAdmin(orderId);
+
+      if (!order) {
+        throw new NotFoundException('Order not found');
+      }
+
+      if (order.status === OrderStatus.PAID) {
+        throw new Error('Cannot cancel paid order');
+      }
+
+      if (order.payosOrderCode) {
+        await this.cancelPaymentOnPayOS(order.payosOrderCode);
+      }
+
+      await this.orderService.updateStatus(orderId, OrderStatus.CANCELED);
+
+      if (this.paymentTimeouts.has(orderId)) {
+        clearTimeout(this.paymentTimeouts.get(orderId));
+        this.paymentTimeouts.delete(orderId);
+      }
+
+      return {
+        message: 'Payment cancelled successfully',
+        orderId,
+      };
+    } catch (error) {
+      console.error('Error cancelling payment:', error);
+      throw error;
+    }
+  }
+
+  private async cancelPaymentOnPayOS(orderCode: number): Promise<void> {
+    const url = `https://api-merchant.payos.vn/v2/payment-requests/${orderCode}/cancel`;
+
+    const config = {
+      headers: {
+        'x-client-id': this.configService.getOrThrow<string>('PAY_CLIENT_ID'),
+        'x-api-key': this.configService.getOrThrow<string>('API_KEY_PAY'),
+      },
+    };
+
+    try {
+      await firstValueFrom(this.httpService.post(url, null, config));
+    } catch (error) {
+      console.error(`Error cancelling PayOS payment link ${orderCode}:`, error);
     }
   }
 }

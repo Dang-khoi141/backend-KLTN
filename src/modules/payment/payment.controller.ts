@@ -4,6 +4,7 @@ import {
   Get,
   Param,
   ParseIntPipe,
+  Patch,
   Post,
   UseGuards,
 } from '@nestjs/common';
@@ -38,5 +39,12 @@ export class PaymentController {
   @Roles(UserRole.CUSTOMER)
   async checkStatus(@Param('orderCode', ParseIntPipe) orderCode: number) {
     return this.paymentService.checkPaymentStatus(orderCode);
+  }
+
+  @Patch('cancel/:orderId')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.CUSTOMER)
+  async cancelPayment(@Param('orderId') orderId: string) {
+    return this.paymentService.cancelPayment(orderId);
   }
 }
