@@ -21,6 +21,9 @@ export class Review {
   @Column({ type: 'text', nullable: true })
   comment?: string;
 
+  @Column({ name: 'is_verified_purchase', type: 'boolean', default: false })
+  isVerifiedPurchase: boolean;
+
   @ManyToOne(() => Product, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'product_id' })
   product: Product;
