@@ -19,13 +19,14 @@ import { UserRole } from '../user/enums/user-role.enum';
 import { ReviewsService } from './reviews.service';
 import { CreateReviewDto } from './dto/create-review.dto';
 import { UpdateReviewDto } from './dto/update-review.dto';
+import { ReviewableProductDto } from './dto/reviewable-product.dto';
 
 @ApiTags('Reviews')
 @Controller('reviews')
-@UseGuards(JwtAuthGuard, RolesGuard)
 export class ReviewsController {
   constructor(private readonly reviewsService: ReviewsService) {}
 
+  @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.CUSTOMER)
   @Post('product/:productId')
   @ResponseMessage('Review created successfully')
@@ -42,6 +43,38 @@ export class ReviewsController {
   async getByProduct(@Param('productId', ParseUUIDPipe) productId: string) {
     return this.reviewsService.findByProduct(productId);
   }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.CUSTOMER)
+  @Get('reviewable-products')
+  @ResponseMessage('Reviewable products retrieved successfully')
+  async getReviewableProducts(@Req() req): Promise<ReviewableProductDto[]> {
+    return this.reviewsService.getReviewableProducts(req.user.userId);
+  }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.CUSTOMER)
+  @Get('product/:productId/my-review')
+  @ResponseMessage('User review retrieved successfully')
+  async getMyReview(
+    @Param('productId', ParseUUIDPipe) productId: string,
+    @Req() req,
+  ) {
+    return this.reviewsService.findUserReviewForProduct(
+      req.user.userId,
+      productId,
+    );
+  }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.CUSTOMER)
+  @Get('my-reviews')
+  @ResponseMessage('User reviews retrieved successfully')
+  async getMyReviews(@Req() req) {
+    return this.reviewsService.findByUser(req.user.userId);
+  }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.CUSTOMER)
   @Patch(':id')
   @ResponseMessage('Review updated successfully')
