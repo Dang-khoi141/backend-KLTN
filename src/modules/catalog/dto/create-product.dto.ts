@@ -7,7 +7,9 @@ import {
   IsPositive,
   IsString,
   IsUUID,
+  Max,
   MaxLength,
+  Min,
 } from 'class-validator';
 
 export class CreateProductDto {
@@ -86,4 +88,16 @@ export class CreateProductDto {
   @IsUUID()
   @IsOptional()
   brandId?: string;
+
+  @ApiProperty({
+    example: 0,
+    description: 'Phần trăm giảm giá (0-100)',
+    required: false,
+    default: 0,
+  })
+  @IsOptional()
+  @IsNumber({ maxDecimalPlaces: 2 })
+  @Min(0)
+  @Max(100)
+  discountPercentage?: number = 0;
 }

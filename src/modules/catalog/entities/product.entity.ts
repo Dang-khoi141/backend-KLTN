@@ -11,7 +11,7 @@ import {
 import { Brand } from './brand.entity';
 import { Category } from './category.entity';
 
-@Entity({ name: 'products', synchronize: false })
+@Entity({ name: 'products', synchronize: true })
 @Index(['name'])
 @Index(['price'])
 @Index(['isActive'])
@@ -25,8 +25,16 @@ export class Product {
   @Column('decimal', { precision: 10, scale: 2 })
   price: number;
 
-  @Column({ length: 500, nullable: true })
+  @Column({ length: 500, nullable: false })
   description?: string;
+
+  @Column('decimal', {
+    name: 'discount_percentage',
+    precision: 5,
+    scale: 2,
+    default: 0,
+  })
+  discountPercentage: number;
 
   @Column({ nullable: true })
   image?: string;

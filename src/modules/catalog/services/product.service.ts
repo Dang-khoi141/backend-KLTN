@@ -30,6 +30,13 @@ export class ProductService {
     dto: CreateProductDto,
     file?: Express.Multer.File,
   ): Promise<Product> {
+    if (
+      dto.discountPercentage === undefined ||
+      dto.discountPercentage === null
+    ) {
+      dto.discountPercentage = 0;
+    }
+
     let category = await this.getDefaultCategory();
     if (dto.categoryId) {
       category = await this.categoryService.findOne(dto.categoryId);
@@ -54,9 +61,20 @@ export class ProductService {
     return this.productRepository.save(product);
   }
 
-  async findAll(): Promise<Product[]> {
-    return this.productRepository.find({
+  async findAll(): Promise<any[]> {
+    const products = await this.productRepository.find({
       relations: ['category', 'brand'],
+    });
+
+    return products.map((p) => {
+      const discount = Number(p.discountPercentage) || 0;
+      const price = Number(p.price);
+      const finalPrice = price * (1 - discount / 100);
+
+      return {
+        ...p,
+        finalPrice,
+      };
     });
   }
 
@@ -80,9 +98,7 @@ export class ProductService {
     if (search) {
       qb.andWhere(
         '(product.name LIKE :search OR product.description LIKE :search)',
-        {
-          search: `%${search}%`,
-        },
+        { search: `%${search}%` },
       );
     }
 
@@ -101,19 +117,28 @@ export class ProductService {
     if (minPrice) {
       qb.andWhere('product.price >= :minPrice', { minPrice });
     }
-
     if (maxPrice) {
       qb.andWhere('product.price <= :maxPrice', { maxPrice });
     }
 
     qb.orderBy('product.createdAt', 'DESC');
-
     qb.skip((page - 1) * limit).take(limit);
 
     const [data, total] = await qb.getManyAndCount();
 
+    const formatted = data.map((p) => {
+      const discount = Number(p.discountPercentage) || 0;
+      const price = Number(p.price);
+      const finalPrice = price * (1 - discount / 100);
+
+      return {
+        ...p,
+        finalPrice,
+      };
+    });
+
     return {
-      data,
+      data: formatted,
       total,
       page,
       limit,
@@ -121,13 +146,21 @@ export class ProductService {
     };
   }
 
-  async findOne(id: string): Promise<Product> {
+  async findOne(id: string): Promise<any> {
     const product = await this.productRepository.findOne({
       where: { id },
       relations: ['category', 'brand'],
     });
     if (!product) throw new NotFoundException('Product not found');
-    return product;
+
+    const discount = Number(product.discountPercentage) || 0;
+    const price = Number(product.price);
+    const finalPrice = price * (1 - discount / 100);
+
+    return {
+      ...product,
+      finalPrice,
+    };
   }
 
   async update(
@@ -254,5 +287,23 @@ export class ProductService {
       message: 'Import sản phẩm thành công',
       importedCount: importedProducts.length,
     };
+  }
+  async countActive(): Promise<number> {
+    const qb = this.productRepository.createQueryBuilder('product');
+    qb.where('product.isActive = :isActive', { isActive: true });
+    const count = await qb.getCount();
+    return count;
+  }
+
+  async countByCategory(categoryName: string): Promise<number> {
+    const qb = this.productRepository
+      .createQueryBuilder('product')
+      .leftJoin('product.category', 'category')
+      .where('product.isActive = :isActive', { isActive: true })
+      .andWhere('category.name LIKE :categoryName', {
+        categoryName: `%${categoryName}%`,
+      });
+
+    return qb.getCount();
   }
 }

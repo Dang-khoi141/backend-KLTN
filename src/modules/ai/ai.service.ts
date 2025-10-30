@@ -20,6 +20,58 @@ export class OpenAIService {
 
   async handleQuery(message: string) {
     try {
+      const bannedKeywords = [
+        'chính trị',
+        'vũ trụ',
+        'toán',
+        'code',
+        'lập trình',
+        'chatgpt',
+        'openai',
+        'youtube',
+        'facebook',
+        'ai là gì',
+        'tin tức',
+        'tình yêu',
+        'phim',
+        'ca sĩ',
+      ];
+      if (bannedKeywords.some((kw) => message.toLowerCase().includes(kw))) {
+        return {
+          reply:
+            'Xin lỗi, tôi chỉ hỗ trợ thông tin về sản phẩm và khuyến mãi của cửa hàng thôi ạ.',
+          products: [],
+        };
+      }
+
+      if (
+        /(bạn là ai|mày là ai|ai đang nói chuyện|ai vậy|mày tên gì|mày là gì)/i.test(
+          message,
+        )
+      ) {
+        return {
+          reply:
+            'Tôi là trợ lý ảo của website FreshFood 🌱. Tôi có thể giúp bạn tìm kiếm sản phẩm, tra cứu khuyến mãi và mã giảm giá của cửa hàng ạ!',
+          products: [],
+        };
+      }
+
+      if (/bao nhiêu sản phẩm|tổng sản phẩm/i.test(message)) {
+        const count = await this.productService.countActive();
+        return {
+          reply: `Hiện tại cửa hàng đang có khoảng ${count} sản phẩm khác nhau, bao gồm thực phẩm, đồ uống và hàng tiêu dùng ạ 🛒`,
+          products: [],
+        };
+      }
+
+      if (/sản phẩm.*oce/i.test(message)) {
+        return this.handleSearchProducts({ keyword: 'OCE' });
+      }
+
+      if (/ăn sáng|ăn trưa|ăn tối|món ngon/i.test(message)) {
+        return this.handleSearchProducts({ keyword: 'thực phẩm' });
+      }
+
       const tools = [
         {
           type: 'function' as const,
@@ -59,8 +111,17 @@ export class OpenAIService {
         messages: [
           {
             role: 'system',
-            content:
-              'Bạn là trợ lý AI của website bán hàng, giúp gợi ý sản phẩm và mã khuyến mãi. Luôn trả lời bằng tiếng Việt. Nếu người dùng hỏi về sản phẩm, hãy dùng searchProducts; nếu hỏi về khuyến mãi, hãy dùng searchPromotions.',
+            content: `
+Bạn là trợ lý AI của website bán hàng FreshFood.
+Bạn chỉ hỗ trợ khách hàng:
+- Tìm kiếm sản phẩm (thực phẩm, đồ uống, nhu yếu phẩm, đồ gia dụng)
+- Gợi ý sản phẩm, khuyến mãi và mã giảm giá
+- Luôn trả lời bằng tiếng Việt, ngắn gọn, thân thiện.
+
+⚠️ Nếu người dùng hỏi ngoài phạm vi (ví dụ: chính trị, học tập, game, vũ trụ,...),
+hãy trả lời đúng một câu duy nhất:
+"Xin lỗi, tôi chỉ hỗ trợ thông tin về sản phẩm và khuyến mãi của cửa hàng thôi ạ."
+          `,
           },
           { role: 'user', content: message },
         ],
@@ -91,7 +152,7 @@ export class OpenAIService {
         return this.handleSearchPromotions();
       }
 
-      const keyword = extractKeyword(message);
+      const keyword = extractKeyword(message) || message.trim();
       if (keyword) {
         this.logger.log(`🔍 Người dùng muốn tìm sản phẩm: ${keyword}`);
         return this.handleSearchProducts({ keyword });
@@ -118,8 +179,16 @@ export class OpenAIService {
     maxPrice?: number;
     limit?: number;
   }) {
+    const keyword = args.keyword?.trim() ?? '';
+    if (!keyword) {
+      return {
+        reply: 'Bạn vui lòng nhập tên sản phẩm cần tìm nhé 💬',
+        products: [],
+      };
+    }
+
     const query: Partial<ProductQueryDto> = {
-      search: args.keyword ?? '',
+      search: keyword,
       maxPrice: args.maxPrice as any,
       page: 1 as any,
       limit: args.limit ?? 10,
@@ -130,7 +199,7 @@ export class OpenAIService {
 
     if (!result?.data?.length) {
       return {
-        reply: `Không tìm thấy sản phẩm nào phù hợp với “${args.keyword ?? ''}”.`,
+        reply: `Không tìm thấy sản phẩm nào phù hợp với “${keyword}”.`,
         products: [],
       };
     }
