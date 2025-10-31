@@ -4,15 +4,18 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import dayjs from 'dayjs';
-import { Between } from 'typeorm';
-import { Users } from '../../user/entities/users.entity';
+import { Between, Repository, DeepPartial } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
+
+import { Users } from '../../user/entities/users.entity';
 import { Order, OrderStatus } from '../entities/order.entity';
-import { Repository, DeepPartial } from 'typeorm';
 import { OrderItem } from '../entities/order-item.entity';
-import { CartService } from './cart.service';
-import { CreateOrderDto } from '../dto/create-order.dto';
 import { Promotion } from '../../promotion/entities/promotion.entity';
+import { CreateOrderDto } from '../dto/create-order.dto';
+import { CartService } from './cart.service';
+import { InventoryService } from '../../inventory/service/inventory.service';
+import { IssueService } from '../../inventory/service/issue.service';
+import { Warehouse } from '../../inventory/entities/warehouse.entity';
 
 @Injectable()
 export class OrderService {
@@ -24,7 +27,11 @@ export class OrderService {
     private readonly userRepo: Repository<Users>,
     @InjectRepository(Promotion)
     private readonly promoRepo: Repository<Promotion>,
+    @InjectRepository(Warehouse)
+    private readonly whRepo: Repository<Warehouse>, // ✅ thêm repo kho
     private readonly cartService: CartService,
+    private readonly inventoryService: InventoryService,
+    private readonly issueService: IssueService,
   ) {}
 
   async getAllOrders(): Promise<Order[]> {
@@ -42,14 +49,12 @@ export class OrderService {
     if (!cart.items?.length) throw new BadRequestException('Cart is empty');
 
     const user = await this.userRepo.findOne({ where: { id: userId } });
-    if (!user) {
-      throw new NotFoundException('User not found');
-    }
+    if (!user) throw new NotFoundException('User not found');
 
     const orderNumber = this.generateOrderNumber();
 
     const order = this.orderRepo.create({
-      user: user,
+      user,
       orderNumber,
       status: OrderStatus.PENDING,
       total: 0,
@@ -60,6 +65,7 @@ export class OrderService {
       notes: dto.notes,
     } as DeepPartial<Order>);
 
+    // ✅ Tính tổng tiền đơn hàng
     let total = 0;
     order.items = cart.items.map((i) => {
       const unitPrice = Number(i.unitPrice ?? i.product.price);
@@ -71,6 +77,7 @@ export class OrderService {
       });
     });
 
+    // ✅ Xử lý khuyến mãi (nếu có)
     let discountAmount = 0;
     let promotion: Promotion | null = null;
 
@@ -79,34 +86,28 @@ export class OrderService {
         where: { code: dto.promotionCode, isActive: true },
       });
 
-      if (!promotion) {
-        throw new BadRequestException('Invalid promotion code');
-      }
+      if (!promotion) throw new BadRequestException('Invalid promotion code');
 
       const now = new Date();
       if (
         (promotion.startDate && now < promotion.startDate) ||
         (promotion.endDate && now > promotion.endDate)
-      ) {
+      )
         throw new BadRequestException('Promotion code expired or inactive');
-      }
 
-      if (promotion.minOrderValue && total < Number(promotion.minOrderValue)) {
+      if (promotion.minOrderValue && total < Number(promotion.minOrderValue))
         throw new BadRequestException(
           `Minimum order value for this promotion is ${promotion.minOrderValue}₫`,
         );
-      }
 
-      if (promotion.discountPercent) {
+      if (promotion.discountPercent)
         discountAmount = Math.floor(
           (total * Number(promotion.discountPercent)) / 100,
         );
-      } else if (promotion.discountAmount) {
+      else if (promotion.discountAmount)
         discountAmount = Number(promotion.discountAmount);
-      }
 
       total -= discountAmount;
-
       order.promotion = promotion;
     }
 
@@ -115,6 +116,44 @@ export class OrderService {
 
     const saved = await this.orderRepo.save(order);
 
+    let warehouse = await this.whRepo.findOne({ where: {} });
+
+    if (!warehouse) {
+      warehouse = await this.whRepo.findOne({
+        where: { name: 'Kho chính' as any },
+      });
+    }
+
+    if (!warehouse) {
+      throw new BadRequestException(
+        'Không tìm thấy kho để xuất hàng. Vui lòng tạo ít nhất 1 kho trong hệ thống.',
+      );
+    }
+
+    try {
+      for (const item of order.items) {
+        await this.inventoryService.decreaseStock(
+          item.product.id,
+          item.quantity,
+        );
+      }
+
+      await this.issueService.createIssue(
+        {
+          orderId: saved.id,
+          warehouseId: warehouse.id,
+          items: order.items.map((item) => ({
+            productId: item.product.id,
+            quantity: item.quantity,
+          })),
+        },
+        userId,
+      );
+    } catch (error) {
+      console.error('❌ Error updating inventory:', error);
+      throw new BadRequestException('Failed to update inventory stock');
+    }
+
     await this.cartService.clear(userId);
 
     const result = await this.orderRepo.findOne({
@@ -122,6 +161,7 @@ export class OrderService {
       relations: ['items', 'items.product', 'promotion'],
     });
     if (!result) throw new NotFoundException('Order not found after save');
+
     return result;
   }
 
@@ -141,6 +181,7 @@ export class OrderService {
     if (!order) throw new NotFoundException('Order not found');
     return order;
   }
+
   async getOrderDetailAdmin(orderId: string): Promise<Order> {
     const order = await this.orderRepo.findOne({
       where: { id: orderId },
@@ -157,6 +198,16 @@ export class OrderService {
     });
     if (!order) throw new NotFoundException('Order not found');
     order.status = status;
+
+    if (status === OrderStatus.CANCELED) {
+      for (const item of order.items) {
+        await this.inventoryService.increaseStock(
+          item.product.id,
+          item.quantity,
+        );
+      }
+    }
+
     return this.orderRepo.save(order);
   }
 
@@ -167,13 +218,15 @@ export class OrderService {
     });
     if (!order) throw new NotFoundException('Order not found');
 
-    if (order.status !== OrderStatus.PENDING) {
-      throw new BadRequestException(
-        'Can only cancel orders with PENDING status',
-      );
-    }
+    if (order.status !== OrderStatus.PENDING)
+      throw new BadRequestException('Can only cancel PENDING orders');
 
     order.status = OrderStatus.CANCELED;
+
+    for (const item of order.items) {
+      await this.inventoryService.increaseStock(item.product.id, item.quantity);
+    }
+
     return this.orderRepo.save(order);
   }
 
@@ -200,13 +253,11 @@ export class OrderService {
 
       if (period === 'day') startDate = now.startOf('day');
       else if (period === 'month') startDate = now.startOf('month');
-      else if (period !== 'week') {
+      else if (period !== 'week')
         throw new BadRequestException('Invalid period value');
-      }
 
-      if (!startDate.isValid() || !now.isValid()) {
+      if (!startDate.isValid() || !now.isValid())
         throw new BadRequestException('Invalid date range');
-      }
 
       const start = startDate.toDate();
       const end = now.toDate();
@@ -235,9 +286,7 @@ export class OrderService {
 
       orders.forEach((order) => {
         const date = dayjs(order.createdAt).format('YYYY-MM-DD');
-        if (days[date] !== undefined) {
-          days[date] += Number(order.total || 0);
-        }
+        if (days[date] !== undefined) days[date] += Number(order.total || 0);
       });
 
       const statusChart = orders.reduce(
@@ -259,7 +308,7 @@ export class OrderService {
         statusChart,
       };
     } catch (error) {
-      console.error(' Error in getStatistics():', error);
+      console.error('Error in getStatistics():', error);
       return {
         totalRevenue: 0,
         totalOrders: 0,

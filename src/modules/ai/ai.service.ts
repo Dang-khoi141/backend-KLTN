@@ -71,6 +71,13 @@ export class OpenAIService {
       if (/ăn sáng|ăn trưa|ăn tối|món ngon/i.test(message)) {
         return this.handleSearchProducts({ keyword: 'thực phẩm' });
       }
+      if (
+        /(thiếu|bổ sung|đau|mỏi|mệt|giảm cân|tăng cân|tăng cơ|sức khỏe|bệnh|canxi|vitamin|protein|tóc rụng|da khô|mắt kém|xương yếu|ăn kiêng|tim mạch|huyết áp)/i.test(
+          message,
+        )
+      ) {
+        return this.handleHealthAdvice(message);
+      }
 
       const tools = [
         {
@@ -153,6 +160,12 @@ hãy trả lời đúng một câu duy nhất:
       }
 
       const keyword = extractKeyword(message) || message.trim();
+      const matchCategoryType = message.match(/c(á|a)c loại\s+(.+)/i);
+      if (matchCategoryType) {
+        const keyword = matchCategoryType[2].trim();
+        this.logger.log(`🔍 Người dùng hỏi các loại: ${keyword}`);
+        return this.handleSearchProducts({ keyword });
+      }
       if (keyword) {
         this.logger.log(`🔍 Người dùng muốn tìm sản phẩm: ${keyword}`);
         return this.handleSearchProducts({ keyword });
@@ -265,6 +278,55 @@ hãy trả lời đúng một câu duy nhất:
       promotions: promos,
     };
   }
+
+  private async handleHealthAdvice(message: string) {
+    this.logger.log('🩺 Phát hiện người dùng cần tư vấn sức khỏe: ' + message);
+
+    const completion = await this.openai.chat.completions.create({
+      model: 'gpt-4o-mini',
+      messages: [
+        {
+          role: 'system',
+          content: `
+Bạn là chuyên gia dinh dưỡng của siêu thị FreshFood 🩺.
+Nhiệm vụ của bạn:
+1️⃣ Đọc yêu cầu hoặc tình trạng sức khỏe người dùng.
+2️⃣ Giải thích ngắn gọn (1–3 câu) tại sao nên dùng nhóm sản phẩm nào.
+3️⃣ Chọn nhóm sản phẩm phù hợp (chỉ 1) từ danh sách:
+["sữa", "thực phẩm bổ sung", "đồ uống dinh dưỡng", "vitamin tổng hợp", "ngũ cốc", "thực phẩm chức năng", "rau củ quả", "nước ép"]
+4️⃣ Trả về JSON như sau:
+{
+  "advice": "Văn bản tư vấn ngắn bằng tiếng Việt",
+  "category": "sữa"
+}
+          `,
+        },
+        { role: 'user', content: message },
+      ],
+    });
+
+    let category = 'thực phẩm bổ sung';
+    let advice =
+      'Bạn nên bổ sung thêm thực phẩm giàu dưỡng chất để cải thiện sức khỏe 💪';
+
+    try {
+      const raw = completion.choices[0]?.message?.content;
+      const parsed = JSON.parse(raw || '{}');
+      category = parsed.category || category;
+      advice = parsed.advice || advice;
+    } catch (e) {
+      this.logger.warn('⚠️ Không parse được phản hồi tư vấn sức khỏe:', e);
+    }
+
+    this.logger.log(`💡 AI tư vấn nhóm sản phẩm: ${category}`);
+
+    const result = await this.handleSearchProducts({ keyword: category });
+
+    return {
+      reply: `${advice}\n\n${result.reply}`,
+      products: result.products,
+    };
+  }
 }
 
 function safeJsonParse(input?: string) {
@@ -276,6 +338,25 @@ function safeJsonParse(input?: string) {
 }
 
 function extractKeyword(msg: string) {
-  const match = msg.match(/tìm\s+(.*)/i);
-  return match ? match[1].trim() : null;
+  msg = msg.toLowerCase().trim();
+
+  const patterns = [
+    /tìm\s+(.*)/i,
+    /mua\s+(.*)/i,
+    /c(á|a)c loại\s+(.*)/i,
+    /loại\s+(.*)/i,
+    /sản phẩm\s+(.*)/i,
+    /có\s+(.*)\s+không/i,
+  ];
+
+  for (const pattern of patterns) {
+    const match = msg.match(pattern);
+    if (match) {
+      return match[match.length - 1].trim();
+    }
+  }
+
+  return msg
+    .replace(/^(tôi|muốn|mua|tìm|cần|cho|bán|có|loại|ai|đang)\s+/gi, '')
+    .trim();
 }

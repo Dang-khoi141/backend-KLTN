@@ -76,4 +76,47 @@ export class InventoryService {
 
     return { imported: inventories.length, message: 'Import successful' };
   }
+
+  async decreaseStock(productId: string, quantity: number) {
+    const inv = await this.invRepo.findOne({ where: { productId } });
+    if (!inv) {
+      throw new BadRequestException(
+        `No inventory found for product ${productId}`,
+      );
+    }
+
+    if (inv.stock < quantity) {
+      throw new BadRequestException(
+        `Not enough stock for product ${productId}. Available: ${inv.stock}, Requested: ${quantity}`,
+      );
+    }
+
+    inv.stock -= quantity;
+    await this.invRepo.save(inv);
+    return inv;
+  }
+
+  async increaseStock(productId: string, quantity: number) {
+    let inv = await this.invRepo.findOne({ where: { productId } });
+
+    if (!inv) {
+      const product = await this.productRepo.findOne({
+        where: { id: productId },
+      });
+      if (!product) {
+        throw new BadRequestException(`Product not found: ${productId}`);
+      }
+
+      inv = this.invRepo.create({
+        productId,
+        stock: quantity,
+        lowStockThreshold: 10,
+      });
+    } else {
+      inv.stock += quantity;
+    }
+
+    await this.invRepo.save(inv);
+    return inv;
+  }
 }

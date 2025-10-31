@@ -52,6 +52,7 @@ import { WarehouseService } from './service/warehouse.service';
     WarehouseController,
   ],
   exports: [
+    TypeOrmModule,
     ReceiptService,
     IssueService,
     CheckService,

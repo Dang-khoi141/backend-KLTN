@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { forwardRef, Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Cart } from './entities/cart.entity';
 import { CartItem } from './entities/cart-item.entity';
@@ -12,6 +12,7 @@ import { CartService } from './service/cart.service';
 import { CartController } from './controller/cart.controller';
 import { OrderController } from './controller/order.controller';
 import { Promotion } from '../promotion/entities/promotion.entity';
+import { InventoryModule } from '../inventory/inventory.module';
 
 @Module({
   imports: [
@@ -24,6 +25,7 @@ import { Promotion } from '../promotion/entities/promotion.entity';
       Users,
       Promotion,
     ]),
+    forwardRef(() => InventoryModule),
   ],
   providers: [CartService, OrderService],
   controllers: [CartController, OrderController],
