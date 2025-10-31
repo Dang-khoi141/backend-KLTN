@@ -10,7 +10,7 @@ import {
 import { Users } from '../../user/entities/users.entity';
 import { Product } from '../../catalog/entities/product.entity';
 
-@Entity({ name: 'reviews', synchronize: true })
+@Entity({ name: 'reviews', synchronize: false })
 export class Review {
   @PrimaryGeneratedColumn('uuid')
   id: string;
