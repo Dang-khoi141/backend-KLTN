@@ -83,7 +83,8 @@ export class OrderService {
     } as DeepPartial<Order>);
 
     let total = 0;
-    order.items = cart.items.map((i) => {
+
+    const orderItems = cart.items.map((i) => {
       const unitPrice = Number(i.unitPrice ?? i.product.price);
       total += unitPrice * i.quantity;
       return this.orderItemRepo.create({
@@ -92,6 +93,8 @@ export class OrderService {
         unitPrice,
       });
     });
+
+    order.items = orderItems;
 
     let discountAmount = 0;
     let promotion: Promotion | null = null;
@@ -146,32 +149,20 @@ export class OrderService {
 
     if ((dto.paymentMethod || 'COD') === 'COD') {
       try {
-        for (const item of order.items) {
-          await this.inventoryService.decreaseStock(
-            item.product.id,
-            item.quantity,
-          );
-        }
-
         await this.issueService.createIssue(
           {
             orderId: saved.id,
             warehouseId: warehouse.id,
-            items: order.items.map((item) => ({
+            items: orderItems.map((item) => ({
               productId: item.product.id,
               quantity: item.quantity,
             })),
           },
           userId,
         );
-      } catch (error) {
-        console.error('❌ Error updating inventory (COD):', error);
-        throw new BadRequestException('Failed to update inventory stock');
+      } catch {
+        throw new BadRequestException('Failed to create stock issue');
       }
-    } else {
-      console.log(
-        '🟡 Payment method is online, stock will be decreased later.',
-      );
     }
 
     await this.cartService.clear(userId);
@@ -250,8 +241,13 @@ export class OrderService {
 
     order.status = OrderStatus.CANCELED;
 
-    for (const item of order.items) {
-      await this.inventoryService.increaseStock(item.product.id, item.quantity);
+    if (order.paymentMethod === 'COD') {
+      for (const item of order.items) {
+        await this.inventoryService.increaseStock(
+          item.product.id,
+          item.quantity,
+        );
+      }
     }
 
     return this.orderRepo.save(order);
