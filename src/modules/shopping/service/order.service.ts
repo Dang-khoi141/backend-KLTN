@@ -28,7 +28,7 @@ export class OrderService {
     @InjectRepository(Promotion)
     private readonly promoRepo: Repository<Promotion>,
     @InjectRepository(Warehouse)
-    private readonly whRepo: Repository<Warehouse>, // ✅ thêm repo kho
+    private readonly whRepo: Repository<Warehouse>,
     private readonly cartService: CartService,
     private readonly inventoryService: InventoryService,
     private readonly issueService: IssueService,
@@ -47,6 +47,23 @@ export class OrderService {
   ): Promise<Order> {
     const cart = await this.cartService.getOrCreateCart(userId);
     if (!cart.items?.length) throw new BadRequestException('Cart is empty');
+    for (const item of cart.items) {
+      const currentStock = await this.inventoryService.getStock(
+        item.product.id,
+      );
+
+      if (currentStock <= 0) {
+        throw new BadRequestException(
+          `Product "${item.product.name}" is out of stock.`,
+        );
+      }
+
+      if (currentStock < item.quantity) {
+        throw new BadRequestException(
+          `Not enough stock for product "${item.product.name}". Available: ${currentStock}, Requested: ${item.quantity}`,
+        );
+      }
+    }
 
     const user = await this.userRepo.findOne({ where: { id: userId } });
     if (!user) throw new NotFoundException('User not found');
@@ -65,7 +82,6 @@ export class OrderService {
       notes: dto.notes,
     } as DeepPartial<Order>);
 
-    // ✅ Tính tổng tiền đơn hàng
     let total = 0;
     order.items = cart.items.map((i) => {
       const unitPrice = Number(i.unitPrice ?? i.product.price);
@@ -77,7 +93,6 @@ export class OrderService {
       });
     });
 
-    // ✅ Xử lý khuyến mãi (nếu có)
     let discountAmount = 0;
     let promotion: Promotion | null = null;
 
@@ -130,28 +145,31 @@ export class OrderService {
       );
     }
 
-    try {
-      for (const item of order.items) {
-        await this.inventoryService.decreaseStock(
-          item.product.id,
-          item.quantity,
-        );
-      }
+    // ✅ Chỉ trừ kho và tạo phiếu xuất nếu là đơn COD
+    if ((dto.paymentMethod || 'COD') === 'COD') {
+      try {
+        for (const item of order.items) {
+          await this.inventoryService.decreaseStock(
+            item.product.id,
+            item.quantity,
+          );
+        }
 
-      await this.issueService.createIssue(
-        {
-          orderId: saved.id,
-          warehouseId: warehouse.id,
-          items: order.items.map((item) => ({
-            productId: item.product.id,
-            quantity: item.quantity,
-          })),
-        },
-        userId,
-      );
-    } catch (error) {
-      console.error('❌ Error updating inventory:', error);
-      throw new BadRequestException('Failed to update inventory stock');
+        await this.issueService.createIssue(
+          {
+            orderId: saved.id,
+            warehouseId: warehouse.id,
+            items: order.items.map((item) => ({
+              productId: item.product.id,
+              quantity: item.quantity,
+            })),
+          },
+          userId,
+        );
+      } catch (error) {
+        console.error('❌ Error updating inventory (COD):', error);
+        throw new BadRequestException('Failed to update inventory stock');
+      }
     }
 
     await this.cartService.clear(userId);
