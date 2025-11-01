@@ -47,6 +47,7 @@ export class OrderService {
   ): Promise<Order> {
     const cart = await this.cartService.getOrCreateCart(userId);
     if (!cart.items?.length) throw new BadRequestException('Cart is empty');
+
     for (const item of cart.items) {
       const currentStock = await this.inventoryService.getStock(
         item.product.id,
@@ -69,7 +70,6 @@ export class OrderService {
     if (!user) throw new NotFoundException('User not found');
 
     const orderNumber = this.generateOrderNumber();
-
     const order = this.orderRepo.create({
       user,
       orderNumber,
@@ -132,7 +132,6 @@ export class OrderService {
     const saved = await this.orderRepo.save(order);
 
     let warehouse = await this.whRepo.findOne({ where: {} });
-
     if (!warehouse) {
       warehouse = await this.whRepo.findOne({
         where: { name: 'Kho chính' as any },
@@ -145,7 +144,6 @@ export class OrderService {
       );
     }
 
-    // ✅ Chỉ trừ kho và tạo phiếu xuất nếu là đơn COD
     if ((dto.paymentMethod || 'COD') === 'COD') {
       try {
         for (const item of order.items) {
@@ -170,6 +168,10 @@ export class OrderService {
         console.error('❌ Error updating inventory (COD):', error);
         throw new BadRequestException('Failed to update inventory stock');
       }
+    } else {
+      console.log(
+        '🟡 Payment method is online, stock will be decreased later.',
+      );
     }
 
     await this.cartService.clear(userId);
@@ -215,14 +217,21 @@ export class OrderService {
       relations: ['items', 'items.product'],
     });
     if (!order) throw new NotFoundException('Order not found');
+
+    const prevStatus = order.status;
     order.status = status;
 
     if (status === OrderStatus.CANCELED) {
-      for (const item of order.items) {
-        await this.inventoryService.increaseStock(
-          item.product.id,
-          item.quantity,
-        );
+      const alreadyDeducted =
+        order.paymentMethod === 'COD' || prevStatus === OrderStatus.PAID;
+
+      if (alreadyDeducted) {
+        for (const item of order.items) {
+          await this.inventoryService.increaseStock(
+            item.product.id,
+            item.quantity,
+          );
+        }
       }
     }
 

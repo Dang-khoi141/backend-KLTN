@@ -138,6 +138,34 @@ export class PaymentService {
         clearTimeout(this.paymentTimeouts.get(order.id));
         this.paymentTimeouts.delete(order.id);
       }
+
+      const paidOrder = await this.orderService.getOrderDetailAdmin(order.id);
+
+      const whRepo = (this.orderService as any)['whRepo'];
+      const warehouse =
+        (await whRepo.findOne({ where: {} })) ??
+        (await whRepo.findOne({ where: { name: 'Kho chính' as any } }));
+
+      if (!warehouse)
+        throw new NotFoundException('Không tìm thấy kho để xuất hàng.');
+
+      const inventoryService = (this.orderService as any)['inventoryService'];
+      for (const item of paidOrder.items) {
+        await inventoryService.decreaseStock(item.product.id, item.quantity);
+      }
+
+      const issueService = (this.orderService as any)['issueService'];
+      await issueService.createIssue(
+        {
+          orderId: paidOrder.id,
+          warehouseId: warehouse.id,
+          items: paidOrder.items.map((i) => ({
+            productId: i.product.id,
+            quantity: i.quantity,
+          })),
+        },
+        paidOrder.user.id,
+      );
     }
 
     return { received: true };
