@@ -64,6 +64,11 @@ export class ProductController {
     return this.productService.findOne(id);
   }
 
+  @Get('category/:categoryId')
+  async getProductsByCategory(@Param('categoryId') categoryId: string) {
+    return this.productService.getProductsByCategory(categoryId);
+  }
+
   @Patch(':id')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.ADMIN, UserRole.SUPERADMIN)

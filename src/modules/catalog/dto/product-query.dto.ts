@@ -2,8 +2,20 @@ import {
   IsOptional,
   IsString,
   IsBoolean,
-  IsNumberString,
+  IsEnum,
+  IsNumber,
+  Min,
+  Max,
 } from 'class-validator';
+import { Type } from 'class-transformer';
+
+export enum SortBy {
+  NEWEST = 'newest',
+  PRICE_ASC = 'priceAsc',
+  PRICE_DESC = 'priceDesc',
+  DISCOUNT = 'discount',
+  RATING = 'rating',
+}
 
 export class ProductQueryDto {
   @IsOptional()
@@ -23,18 +35,38 @@ export class ProductQueryDto {
   isActive?: boolean;
 
   @IsOptional()
-  @IsNumberString()
+  @Type(() => Number)
+  @IsNumber()
+  @Min(0)
   minPrice?: number;
 
   @IsOptional()
-  @IsNumberString()
+  @Type(() => Number)
+  @IsNumber()
+  @Min(0)
   maxPrice?: number;
 
   @IsOptional()
-  @IsNumberString()
-  page?: number;
+  @Type(() => Number)
+  @IsNumber()
+  @Min(0)
+  @Max(5)
+  minRating?: number;
 
   @IsOptional()
-  @IsNumberString()
-  limit?: number;
+  @IsEnum(SortBy)
+  sortBy?: SortBy;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber()
+  @Min(1)
+  page?: number = 1;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber()
+  @Min(1)
+  @Max(100)
+  limit?: number = 20;
 }

@@ -13,7 +13,7 @@ import { Product } from '../entities/product.entity';
 import { CategoryService } from './category.service';
 import { BrandService } from './brand.service';
 import { Brand } from '../entities/brand.entity';
-import { ProductQueryDto } from '../dto/product-query.dto';
+import { ProductQueryDto, SortBy } from '../dto/product-query.dto';
 import * as XLSX from 'xlsx';
 
 @Injectable()
@@ -86,14 +86,22 @@ export class ProductService {
       isActive,
       minPrice,
       maxPrice,
+      minRating,
+      sortBy = SortBy.NEWEST,
       page = 1,
-      limit = 10,
+      limit = 20,
     } = query;
 
     const qb = this.productRepository
       .createQueryBuilder('product')
       .leftJoinAndSelect('product.category', 'category')
-      .leftJoinAndSelect('product.brand', 'brand');
+      .leftJoinAndSelect('product.brand', 'brand')
+      .leftJoin('reviews', 'review', 'review.product_id = product.id')
+      .addSelect('COALESCE(AVG(review.rating), 0)', 'avgRating')
+      .addSelect('COUNT(DISTINCT review.id)', 'reviewCount')
+      .groupBy('product.id')
+      .addGroupBy('category.id')
+      .addGroupBy('brand.id');
 
     if (search) {
       qb.andWhere(
@@ -114,26 +122,56 @@ export class ProductService {
       qb.andWhere('product.isActive = :isActive', { isActive });
     }
 
-    if (minPrice) {
+    if (minPrice !== undefined) {
       qb.andWhere('product.price >= :minPrice', { minPrice });
     }
-    if (maxPrice) {
+
+    if (maxPrice !== undefined) {
       qb.andWhere('product.price <= :maxPrice', { maxPrice });
     }
 
-    qb.orderBy('product.createdAt', 'DESC');
+    if (minRating !== undefined && minRating > 0) {
+      qb.having('AVG(review.rating) >= :minRating', { minRating });
+    }
+
+    switch (sortBy) {
+      case SortBy.PRICE_ASC:
+        qb.orderBy('product.price', 'ASC');
+        break;
+      case SortBy.PRICE_DESC:
+        qb.orderBy('product.price', 'DESC');
+        break;
+      case SortBy.DISCOUNT:
+        qb.orderBy('product.discountPercentage', 'DESC');
+        break;
+      case SortBy.RATING:
+        qb.orderBy('avgRating', 'DESC');
+        break;
+      case SortBy.NEWEST:
+      default:
+        qb.orderBy('product.createdAt', 'DESC');
+        break;
+    }
+
+    const totalQb = qb.clone();
+    const total = (await totalQb.getMany()).length;
+
     qb.skip((page - 1) * limit).take(limit);
 
-    const [data, total] = await qb.getManyAndCount();
+    const rawData = await qb.getRawAndEntities();
 
-    const formatted = data.map((p) => {
+    const formatted = rawData.entities.map((p, index) => {
       const discount = Number(p.discountPercentage) || 0;
       const price = Number(p.price);
       const finalPrice = price * (1 - discount / 100);
+      const avgRating = parseFloat(rawData.raw[index].avgRating) || 0;
+      const reviewCount = parseInt(rawData.raw[index].reviewCount) || 0;
 
       return {
         ...p,
         finalPrice,
+        avgRating: Math.round(avgRating * 10) / 10,
+        reviewCount,
       };
     });
 
@@ -147,20 +185,71 @@ export class ProductService {
   }
 
   async findOne(id: string): Promise<any> {
-    const product = await this.productRepository.findOne({
-      where: { id },
-      relations: ['category', 'brand'],
-    });
-    if (!product) throw new NotFoundException('Product not found');
+    const qb = this.productRepository
+      .createQueryBuilder('product')
+      .leftJoinAndSelect('product.category', 'category')
+      .leftJoinAndSelect('product.brand', 'brand')
+      .leftJoin('reviews', 'review', 'review.product_id = product.id')
+      .addSelect('COALESCE(AVG(review.rating), 0)', 'avgRating')
+      .addSelect('COUNT(DISTINCT review.id)', 'reviewCount')
+      .where('product.id = :id', { id })
+      .groupBy('product.id')
+      .addGroupBy('category.id')
+      .addGroupBy('brand.id');
 
+    const result = await qb.getRawAndEntities();
+
+    if (!result.entities || result.entities.length === 0) {
+      throw new NotFoundException('Product not found');
+    }
+
+    const product = result.entities[0];
     const discount = Number(product.discountPercentage) || 0;
     const price = Number(product.price);
     const finalPrice = price * (1 - discount / 100);
+    const avgRating = parseFloat(result.raw[0].avgRating) || 0;
+    const reviewCount = parseInt(result.raw[0].reviewCount) || 0;
 
     return {
       ...product,
       finalPrice,
+      avgRating: Math.round(avgRating * 10) / 10,
+      reviewCount,
     };
+  }
+
+  async getProductsByCategory(categoryId: string) {
+    const qb = this.productRepository
+      .createQueryBuilder('product')
+      .leftJoinAndSelect('product.category', 'category')
+      .leftJoinAndSelect('product.brand', 'brand')
+      .leftJoin('reviews', 'review', 'review.product_id = product.id')
+      .addSelect('COALESCE(AVG(review.rating), 0)', 'avgRating')
+      .addSelect('COUNT(DISTINCT review.id)', 'reviewCount')
+      .where('category.id = :categoryId', { categoryId })
+      .groupBy('product.id')
+      .addGroupBy('category.id')
+      .addGroupBy('brand.id')
+      .orderBy('product.createdAt', 'DESC');
+
+    const result = await qb.getRawAndEntities();
+
+    const formatted = result.entities.map((p, index) => {
+      const discount = Number(p.discountPercentage) || 0;
+      const price = Number(p.price);
+      const finalPrice = price * (1 - discount / 100);
+      const avgRating = parseFloat(result.raw[index].avgRating) || 0;
+      const reviewCount = parseInt(result.raw[index].reviewCount) || 0;
+
+      return {
+        ...p,
+        finalPrice,
+        avgRating: Math.round(avgRating * 10) / 10,
+        reviewCount,
+      };
+    });
+
+    return formatted;
   }
 
   async update(
@@ -288,6 +377,7 @@ export class ProductService {
       importedCount: importedProducts.length,
     };
   }
+
   async countActive(): Promise<number> {
     const qb = this.productRepository.createQueryBuilder('product');
     qb.where('product.isActive = :isActive', { isActive: true });
