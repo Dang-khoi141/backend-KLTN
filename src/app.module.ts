@@ -20,6 +20,7 @@ import { PromotionModule } from './modules/promotion/promotion.module';
 import { OpenAIModule } from './modules/ai/ai.module';
 import { ReviewsController } from './modules/reviews/reviews.controller';
 import { ReviewsModule } from './modules/reviews/reviews.module';
+import { BannerModule } from './modules/banner/banner.module';
 
 @Module({
   imports: [
@@ -36,6 +37,7 @@ import { ReviewsModule } from './modules/reviews/reviews.module';
     PromotionModule,
     OpenAIModule,
     ReviewsModule,
+    BannerModule,
   ],
   controllers: [AppController, PromotionController, ReviewsController],
   providers: [
