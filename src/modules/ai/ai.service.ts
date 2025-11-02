@@ -71,6 +71,69 @@ export class OpenAIService {
       if (/ăn sáng|ăn trưa|ăn tối|món ngon/i.test(message)) {
         return this.handleSearchProducts({ keyword: 'thực phẩm' });
       }
+      const bannedProductKeywords = [
+        'quần áo',
+        'áo sơ mi',
+        'váy',
+        'đầm',
+        'quần jean',
+        'áo khoác',
+        'quần short',
+        'giày',
+        'dép',
+        'túi xách',
+        'balo',
+        'mũ',
+        'nón',
+
+        'nước hoa',
+        'mỹ phẩm',
+        'son môi',
+        'kem dưỡng',
+        'kem chống nắng',
+        'serum',
+        'phấn trang điểm',
+        'nước tẩy trang',
+        'sữa rửa mặt',
+        'sữa tắm',
+        'dầu gội',
+        'dầu xả',
+
+        'tivi',
+        'máy giặt',
+        'tủ lạnh',
+        'điện thoại',
+        'máy tính',
+        'ipad',
+        'laptop',
+        'loa',
+        'tai nghe',
+        'quạt điện',
+
+        'bột giặt',
+        'nước rửa chén',
+        'nước lau sàn',
+        'xà phòng giặt',
+
+        'bàn',
+        'ghế',
+        'tủ',
+        'nệm',
+        'chăn',
+        'ga giường',
+        'màn cửa',
+      ];
+
+      if (
+        bannedProductKeywords.some((kw) => message.toLowerCase().includes(kw))
+      ) {
+        return {
+          reply:
+            'Xin lỗi, cửa hàng FreshFood hiện chỉ bán thực phẩm, đồ uống và hàng tiêu dùng thôi ạ 🛒',
+          products: [],
+        };
+      }
+
       if (
         /(thiếu|bổ sung|đau|mỏi|mệt|giảm cân|tăng cân|tăng cơ|sức khỏe|bệnh|canxi|vitamin|protein|tóc rụng|da khô|mắt kém|xương yếu|ăn kiêng|tim mạch|huyết áp)/i.test(
           message,
@@ -289,17 +352,17 @@ hãy trả lời đúng một câu duy nhất:
           role: 'system',
           content: `
 Bạn là chuyên gia dinh dưỡng của siêu thị FreshFood 🩺.
-Nhiệm vụ của bạn:
+Nhiệm vụ:
 1️⃣ Đọc yêu cầu hoặc tình trạng sức khỏe người dùng.
 2️⃣ Giải thích ngắn gọn (1–3 câu) tại sao nên dùng nhóm sản phẩm nào.
-3️⃣ Chọn nhóm sản phẩm phù hợp (chỉ 1) từ danh sách:
-["sữa", "thực phẩm bổ sung", "đồ uống dinh dưỡng", "vitamin tổng hợp", "ngũ cốc", "thực phẩm chức năng", "rau củ quả", "nước ép"]
-4️⃣ Trả về JSON như sau:
+3️⃣ Xác định nhóm sản phẩm cụ thể (ví dụ: "sữa tươi", "sữa bột", "sữa đặc", "vitamin tổng hợp", "ngũ cốc", "thực phẩm bổ sung", "thực phẩm chức năng", "rau củ quả", "nước ép", "đồ uống dinh dưỡng").
+⚠️ Không chọn các loại mỹ phẩm, sữa tắm, dầu gội hoặc sản phẩm không liên quan đến sức khỏe dinh dưỡng.
+4️⃣ Trả về JSON dạng:
 {
-  "advice": "Văn bản tư vấn ngắn bằng tiếng Việt",
-  "category": "sữa"
+  "advice": "Giải thích tư vấn ngắn bằng tiếng Việt",
+  "category": "sữa tươi"
 }
-          `,
+        `,
         },
         { role: 'user', content: message },
       ],
@@ -321,6 +384,13 @@ Nhiệm vụ của bạn:
     this.logger.log(`💡 AI tư vấn nhóm sản phẩm: ${category}`);
 
     const result = await this.handleSearchProducts({ keyword: category });
+
+    if (!result.products?.length) {
+      return {
+        reply: `${advice}`,
+        products: [],
+      };
+    }
 
     return {
       reply: `${advice}\n\n${result.reply}`,
