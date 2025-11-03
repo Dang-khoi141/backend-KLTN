@@ -5,7 +5,7 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { JwtService } from '@nestjs/jwt';
+import { JwtService, JwtSignOptions } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 
 import { IJwtPayload } from '../common/interfaces/jwt-payload.interface';
@@ -67,7 +67,7 @@ export class AuthService {
     const accessToken = this.jwtService.sign(payload, {
       secret: this.configService.get<string>('JWT_SECRET'),
       expiresIn: this.configService.get<string>('JWT_EXPIRES_IN') || '15m',
-    });
+    } as JwtSignOptions);
 
     const refreshToken = this.jwtService.sign(payload, {
       secret:
@@ -75,7 +75,7 @@ export class AuthService {
         'refresh_secret_key',
       expiresIn:
         this.configService.get<string>('JWT_REFRESH_EXPIRES_IN') || '7d',
-    });
+    } as JwtSignOptions);
 
     return {
       accessToken,
