@@ -101,7 +101,7 @@ export class AuthService {
       const newAccessToken = this.jwtService.sign(newPayload, {
         secret: this.configService.get<string>('JWT_SECRET'),
         expiresIn: this.configService.get<string>('JWT_EXPIRES_IN') || '15m',
-      });
+      } as JwtSignOptions);
 
       const newRefreshToken = this.jwtService.sign(newPayload, {
         secret:
@@ -109,7 +109,7 @@ export class AuthService {
           'refresh_secret_key',
         expiresIn:
           this.configService.get<string>('JWT_REFRESH_EXPIRES_IN') || '7d',
-      });
+      } as JwtSignOptions);
 
       return {
         accessToken: newAccessToken,
