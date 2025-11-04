@@ -28,5 +28,5 @@ COPY --from=deps  /app/node_modules ./node_modules
 COPY --from=build /app/dist         ./dist
 COPY .env.sample ./.env.sample
 
-EXPOSE 3001
+EXPOSE 3012
 CMD ["/bin/sh","-c","envsubst < .env.sample > .env && node dist/main.js"]

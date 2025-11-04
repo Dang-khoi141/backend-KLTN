@@ -20,7 +20,7 @@ async function bootstrap() {
   });
 
   // =========  start: server config  ========= //
-  const port = configService.get<number>('PORT') || 3001;
+  const port = configService.get<number>('PORT') || 3012;
   const host = configService.get<string>('HOST') || '0.0.0.0';
   const origin = configService.get<string>('ORIGIN') || '*';
   // =========  end: server config  ========= //
