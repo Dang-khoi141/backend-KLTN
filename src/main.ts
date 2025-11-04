@@ -57,8 +57,8 @@ async function bootstrap() {
   // ==================================================
   // Start the application
   // ==================================================
-  await app.listen(port, host);
-  console.log(`🎉 Application is running on: http://${host}:${port}`);
-  console.log(`📡 API endpoint: http://${host}:${port}/api/v${apiVersion}`);
+  await app.listen(port, '127.0.0.1');
+  console.log(`🎉 Application is running on: http://127.0.0.1:${port}`);
+  console.log(`📡 API endpoint: http://127.0.0.1:${port}/api/v${apiVersion}`);
 }
 bootstrap();
