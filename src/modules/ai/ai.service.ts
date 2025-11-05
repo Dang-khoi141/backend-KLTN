@@ -45,7 +45,7 @@ export class OpenAIService {
       }
 
       if (
-        /(bạn là ai|mày là ai|ai đang nói chuyện|ai vậy|mày tên gì|mày là gì)/i.test(
+        /(bạn là ai|mày là ai|ai đang nói chuyện|ai vậy|mày tên gì|mày là gì|xin chào|chào bạn|chào|hello|hi|hey|helo|alo|good morning|good afternoon|good evening)/i.test(
           message,
         )
       ) {
@@ -63,7 +63,77 @@ export class OpenAIService {
           products: [],
         };
       }
-
+      const categoryMap: Record<string, string> = {
+        rau: 'Rau củ quả',
+        'rau củ': 'Rau củ quả',
+        'rau quả': 'Rau củ quả',
+        'trái cây': 'Trái cây',
+        'hoa quả': 'Trái cây',
+        thịt: 'Thịt tươi',
+        'thịt tươi': 'Thịt tươi',
+        'hải sản': 'Hải sản',
+        cá: 'Hải sản',
+        tôm: 'Hải sản',
+        trứng: 'Trứng',
+        gạo: 'Gạo & Hạt',
+        'gạo & hạt': 'Gạo & Hạt',
+        bánh: 'Bánh kẹo',
+        kẹo: 'Bánh kẹo',
+        mì: 'Mì ăn liền',
+        'mì ăn liền': 'Mì ăn liền',
+        'nước ngọt': 'Nước ngọt có ga',
+        'nước suối': 'Nước suối',
+        'nước trái cây': 'Nước trái cây',
+        'nước chấm': 'Nước chấm',
+        'nước rửa chén': 'Nước rửa chén',
+        'bột giặt': 'Bột giặt',
+        'nước xả': 'Nước xả vải',
+        'nước tăng lực': 'Nước tăng lực',
+        sữa: 'Sữa tươi & Sữa chua',
+        'sữa tươi': 'Sữa tươi & Sữa chua',
+        'sữa chua': 'Sữa tươi & Sữa chua',
+        'sữa bột': 'Sữa bột',
+        tã: 'Tã giấy',
+        'tã giấy': 'Tã giấy',
+        'gia vị': 'Gia vị nấu ăn',
+        'nước mắm': 'Gia vị nấu ăn',
+        muối: 'Đường & Muối',
+        đường: 'Đường & Muối',
+        'cà phê': 'Cà phê',
+        trà: 'Trà & Trà túi lọc',
+        'xúc xích': 'Xúc xích & Chế biến',
+        'chế biến': 'Xúc xích & Chế biến',
+      };
+      const foundCategory = Object.keys(categoryMap).find((key) =>
+        message.toLowerCase().includes(key.toLowerCase()),
+      );
+      if (foundCategory) {
+        const categoryName = categoryMap[foundCategory];
+        this.logger.log(`📦 Người dùng hỏi danh mục: ${categoryName}`);
+        return this.handleSearchProducts({ keyword: categoryName });
+      }
+      const priceMatch = message.match(
+        /(\d+(\.\d+)?)(\s?)(k|nghìn|ngàn|triệu|đ|vnđ)?/i,
+      );
+      let maxPrice: number | undefined;
+      if (priceMatch) {
+        const value = parseFloat(priceMatch[1]);
+        if (!isNaN(value)) {
+          if (/triệu/i.test(priceMatch[0])) maxPrice = value * 1_000_000;
+          else if (/k|nghìn|ngàn/i.test(priceMatch[0]))
+            maxPrice = value * 1_000;
+          else if (/đ|vnđ/i.test(priceMatch[0])) maxPrice = value;
+          else if (value < 1000) maxPrice = value * 1000;
+        }
+      }
+      if (
+        /(dưới|tầm|khoảng|đổ lại|không quá|<=|ít hơn)/i.test(message) &&
+        maxPrice
+      ) {
+        const keyword = extractKeyword(message);
+        this.logger.log(`🔍 Tìm sản phẩm "${keyword}" với giá <= ${maxPrice}`);
+        return this.handleSearchProducts({ keyword, maxPrice });
+      }
       if (/sản phẩm.*oce/i.test(message)) {
         return this.handleSearchProducts({ keyword: 'OCE' });
       }
