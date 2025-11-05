@@ -57,17 +57,23 @@ export class CartService {
     if (!product) throw new NotFoundException('Product not found');
     if (!product.isActive) throw new BadRequestException('Product is inactive');
 
+    const discount = Number(product.discountPercentage) || 0;
+    const price = Number(product.price);
+    const finalPrice =
+      discount > 0 ? Math.round(price * (1 - discount / 100)) : price;
+
     let item = cart.items.find((i) => i.product.id === productId);
 
     if (item) {
       item.quantity += quantity;
+      item.unitPrice = finalPrice;
       await this.itemRepo.save(item);
     } else {
       item = this.itemRepo.create({
         cart: cart,
         product: product,
         quantity,
-        unitPrice: Number(product.price),
+        unitPrice: finalPrice,
       });
       await this.itemRepo.save(item);
     }
@@ -85,7 +91,13 @@ export class CartService {
     if (quantity <= 0) {
       await this.itemRepo.delete({ id: item.id });
     } else {
+      const discount = Number(item.product.discountPercentage) || 0;
+      const price = Number(item.product.price);
+      const finalPrice =
+        discount > 0 ? Math.round(price * (1 - discount / 100)) : price;
+
       item.quantity = quantity;
+      item.unitPrice = finalPrice;
       await this.itemRepo.save(item);
     }
 

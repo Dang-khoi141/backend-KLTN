@@ -85,7 +85,7 @@ export class OrderService {
     let total = 0;
 
     const orderItems = cart.items.map((i) => {
-      const unitPrice = Number(i.unitPrice ?? i.product.price);
+      const unitPrice = Number(i.unitPrice);
       total += unitPrice * i.quantity;
       return this.orderItemRepo.create({
         product: i.product,
