@@ -84,6 +84,11 @@ export class OpenAIService {
         };
       }
       const categoryMap: Record<string, string> = {
+        mì: 'Mì ăn liền',
+        'mì tôm': 'Mì ăn liền',
+        'mì gói': 'Mì ăn liền',
+        'mì ly': 'Mì ăn liền',
+        'mì ăn liền': 'Mì ăn liền',
         rau: 'Rau củ quả',
         'rau củ': 'Rau củ quả',
         'rau quả': 'Rau củ quả',
@@ -99,8 +104,6 @@ export class OpenAIService {
         'gạo & hạt': 'Gạo & Hạt',
         bánh: 'Bánh kẹo',
         kẹo: 'Bánh kẹo',
-        mì: 'Mì ăn liền',
-        'mì ăn liền': 'Mì ăn liền',
         'nước ngọt': 'Nước ngọt có ga',
         'nước suối': 'Nước suối',
         'nước trái cây': 'Nước trái cây',
