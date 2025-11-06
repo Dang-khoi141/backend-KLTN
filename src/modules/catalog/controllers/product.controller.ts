@@ -58,6 +58,12 @@ export class ProductController {
     return this.productService.search(query);
   }
 
+  @Get('featured')
+  @ResponseMessage('Featured products retrieved successfully')
+  async getFeaturedProducts() {
+    return this.productService.getFeaturedProducts();
+  }
+
   @Get(':id')
   @ResponseMessage('Product retrieved successfully')
   findOne(@Param('id', ParseUUIDPipe) id: string) {

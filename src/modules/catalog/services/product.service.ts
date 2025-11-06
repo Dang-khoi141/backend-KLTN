@@ -396,4 +396,44 @@ export class ProductService {
 
     return qb.getCount();
   }
+
+  async getFeaturedProducts() {
+    const qb = this.productRepository
+      .createQueryBuilder('product')
+      .leftJoinAndSelect('product.category', 'category')
+      .leftJoinAndSelect('product.brand', 'brand')
+      .innerJoin('order_items', 'oi', 'oi.product_id = product.id')
+      .innerJoin('orders', 'o', 'o.id = oi.order_id')
+      .leftJoin('reviews', 'review', 'review.product_id = product.id')
+      .addSelect('SUM(oi.quantity)', 'totalSold')
+      .addSelect('COALESCE(AVG(review.rating), 0)', 'avgRating')
+      .addSelect('COUNT(DISTINCT review.id)', 'reviewCount')
+      .where(
+        `o.status IN ('PAID','CONFIRMED','SHIPPED','DELIVERED')
+       AND o.created_at >= NOW() - INTERVAL '7 days'`,
+      )
+      .groupBy('product.id')
+      .addGroupBy('category.id')
+      .addGroupBy('brand.id')
+
+      .orderBy('"totalSold"', 'DESC')
+      .limit(20);
+
+    const result = await qb.getRawAndEntities();
+
+    return result.entities.map((p, i) => {
+      const discount = Number(p.discountPercentage) || 0;
+      const price = Number(p.price);
+      const finalPrice = price * (1 - discount / 100);
+
+      return {
+        ...p,
+        finalPrice,
+        avgRating:
+          Math.round((parseFloat(result.raw[i].avgRating) || 0) * 10) / 10,
+        reviewCount: parseInt(result.raw[i].reviewCount) || 0,
+        totalSold: parseInt(result.raw[i].totalSold) || 0,
+      };
+    });
+  }
 }
