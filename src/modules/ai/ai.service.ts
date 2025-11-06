@@ -43,7 +43,27 @@ export class OpenAIService {
           products: [],
         };
       }
+      if (
+        /(giỏ hàng|đơn hàng|cart|hàng của tôi|đặt hàng của tôi)/i.test(message)
+      ) {
+        return {
+          reply:
+            'Giỏ hàng của bạn hiện không được hiển thị trong khung chat ạ 🛒.\nBạn có thể nhấn vào biểu tượng “🛍️ Giỏ hàng” ở góc trên cùng bên phải website để xem hoặc chỉnh sửa sản phẩm nhé!',
+          products: [],
+        };
+      }
 
+      if (
+        /(tài khoản|đăng nhập|đăng xuất|đổi mật khẩu|profile|account)/i.test(
+          message,
+        )
+      ) {
+        return {
+          reply:
+            'Bạn có thể quản lý tài khoản hoặc đăng nhập bằng cách nhấn vào biểu tượng “👤 Tài khoản” ở góc trên cùng bên phải trang web nhé!',
+          products: [],
+        };
+      }
       if (
         /(bạn là ai|mày là ai|ai đang nói chuyện|ai vậy|mày tên gì|mày là gì|xin chào|chào bạn|chào|hello|hi|hey|helo|alo|good morning|good afternoon|good evening)/i.test(
           message,
@@ -155,7 +175,6 @@ export class OpenAIService {
         'balo',
         'mũ',
         'nón',
-
         'nước hoa',
         'mỹ phẩm',
         'son môi',
@@ -345,7 +364,7 @@ hãy trả lời đúng một câu duy nhất:
 
     if (!result?.data?.length) {
       return {
-        reply: `Không tìm thấy sản phẩm nào phù hợp với “${keyword}”.`,
+        reply: `Mình chưa thấy sản phẩm nào khớp với “${keyword}” cả 😅. Có thể bạn thử gõ rõ hơn tên sản phẩm hoặc chọn danh mục gần giống nhé!`,
         products: [],
       };
     }
@@ -423,14 +442,13 @@ hãy trả lời đúng một câu duy nhất:
           content: `
 Bạn là chuyên gia dinh dưỡng của siêu thị FreshFood 🩺.
 Nhiệm vụ:
-1️⃣ Đọc yêu cầu hoặc tình trạng sức khỏe người dùng.
-2️⃣ Giải thích ngắn gọn (1–3 câu) tại sao nên dùng nhóm sản phẩm nào.
-3️⃣ Xác định nhóm sản phẩm cụ thể (ví dụ: "sữa tươi", "sữa bột", "sữa đặc", "vitamin tổng hợp", "ngũ cốc", "thực phẩm bổ sung", "thực phẩm chức năng", "rau củ quả", "nước ép", "đồ uống dinh dưỡng").
-⚠️ Không chọn các loại mỹ phẩm, sữa tắm, dầu gội hoặc sản phẩm không liên quan đến sức khỏe dinh dưỡng.
-4️⃣ Trả về JSON dạng:
+1️⃣ Đọc tình trạng sức khỏe người dùng.
+2️⃣ Tư vấn ngắn gọn (1–3 câu) bằng tiếng Việt.
+3️⃣ Gợi ý nhóm sản phẩm nên dùng (ví dụ: "thịt tươi", "rau củ quả", "sữa bột", "ngũ cốc", "nước trái cây", "thực phẩm bổ sung").
+4️⃣ Trả về JSON:
 {
-  "advice": "Giải thích tư vấn ngắn bằng tiếng Việt",
-  "category": "sữa tươi"
+  "advice": "Giải thích ngắn gọn bằng tiếng Việt",
+  "category": "rau củ quả"
 }
         `,
         },
@@ -440,7 +458,7 @@ Nhiệm vụ:
 
     let category = 'thực phẩm bổ sung';
     let advice =
-      'Bạn nên bổ sung thêm thực phẩm giàu dưỡng chất để cải thiện sức khỏe 💪';
+      'Bạn nên bổ sung thêm thực phẩm giàu dinh dưỡng để cải thiện sức khỏe 💪';
 
     try {
       const raw = completion.choices[0]?.message?.content;
@@ -451,19 +469,41 @@ Nhiệm vụ:
       this.logger.warn('⚠️ Không parse được phản hồi tư vấn sức khỏe:', e);
     }
 
-    this.logger.log(`💡 AI tư vấn nhóm sản phẩm: ${category}`);
+    const healthCategoryMap: Record<string, string> = {
+      'sữa tươi': 'Sữa tươi & Sữa chua',
+      'sữa bột': 'Sữa bột',
+      vitamin: 'Thực phẩm bổ sung',
+      'thực phẩm bổ sung': 'Thực phẩm bổ sung',
+      'rau củ quả': 'Rau củ quả',
+      'trái cây': 'Trái cây',
+      'nước ép': 'Nước trái cây',
+      'ngũ cốc': 'Gạo & Hạt',
+      'hải sản': 'Hải sản',
+      thịt: 'Thịt tươi',
+      trứng: 'Trứng',
+      đậu: 'Đậu nành & Tàu hủ',
+      'nước uống': 'Nước suối',
+      'đồ uống dinh dưỡng': 'Nước trái cây',
+    };
 
-    const result = await this.handleSearchProducts({ keyword: category });
+    const mappedCategory =
+      healthCategoryMap[category.toLowerCase()] || category;
+
+    this.logger.log(
+      `💡 AI gợi ý danh mục dinh dưỡng: ${category} → map tới: ${mappedCategory}`,
+    );
+
+    const result = await this.handleSearchProducts({ keyword: mappedCategory });
 
     if (!result.products?.length) {
       return {
-        reply: `${advice}`,
+        reply: `${advice}\n\nHiện tại FreshFood chưa có sản phẩm phù hợp cho nhóm “${mappedCategory}”, bạn có thể tham khảo thêm ý kiến bác sĩ hoặc chuyên gia dinh dưỡng nhé 🩺`,
         products: [],
       };
     }
 
     return {
-      reply: `${advice}\n\n${result.reply}`,
+      reply: `${advice}\n\nMình gợi ý thêm vài sản phẩm phù hợp mà bạn có thể mua tại FreshFood 🛒:\n${result.reply.replace('Mình gợi ý một vài sản phẩm phù hợp:\n', '')}`,
       products: result.products,
     };
   }
