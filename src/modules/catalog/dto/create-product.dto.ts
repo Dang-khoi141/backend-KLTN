@@ -98,6 +98,7 @@ export class CreateProductDto {
   @IsOptional()
   @IsNumber({ maxDecimalPlaces: 2 })
   @Min(0)
+  @Type(() => Number)
   @Max(100)
   discountPercentage?: number = 0;
 }
