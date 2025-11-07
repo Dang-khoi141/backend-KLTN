@@ -7,6 +7,7 @@ import {
   UploadedFile,
   UseInterceptors,
   BadRequestException,
+  Delete,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import * as XLSX from 'xlsx';
@@ -41,6 +42,18 @@ export class InventoryController {
     return this.inventoryService.getStock(productId);
   }
 
+  @Delete(':productId')
+  @ResponseMessage('Inventory deleted successfully')
+  async deleteInventory(@Param('productId') productId: string) {
+    const deletedCount =
+      await this.inventoryService.deleteInventoryByProductId(productId);
+    if (deletedCount === 0) {
+      throw new BadRequestException(
+        'No inventory found for the given product ID',
+      );
+    }
+    return { deletedCount };
+  }
   @Post('import')
   @UseInterceptors(FileInterceptor('file'))
   @ResponseMessage('Products imported successfully')

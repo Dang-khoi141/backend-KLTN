@@ -188,7 +188,6 @@ export class OpenAIService {
         'nước tẩy trang',
         'sữa rửa mặt',
         'sữa tắm',
-        'dầu gội',
         'dầu xả',
 
         'tivi',
@@ -202,8 +201,6 @@ export class OpenAIService {
         'tai nghe',
         'quạt điện',
 
-        'bột giặt',
-        'nước rửa chén',
         'nước lau sàn',
         'xà phòng giặt',
 

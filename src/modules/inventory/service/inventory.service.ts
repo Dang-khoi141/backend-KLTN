@@ -26,6 +26,11 @@ export class InventoryService {
       .getMany();
   }
 
+  async deleteInventoryByProductId(productId: string) {
+    const result = await this.invRepo.delete({ productId });
+    return result.affected || 0;
+  }
+
   async getAllInventory() {
     return this.invRepo.find({ relations: ['product'] });
   }
