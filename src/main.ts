@@ -38,15 +38,8 @@ async function bootstrap() {
   // =========  end: swagger config  ========= //
 
   // =========  start: CORS config  ========= //
-  // Allowlist for CORS: keep wildcard behavior when origin is '*',
-  // otherwise allow the configured origin plus fresh-food.dev (http and https).
-  const extraAllowedOrigins = ['https://fresh-food.dev', 'http://fresh-food.dev'];
-  const originList = origin === '*'
-    ? '*'
-    : Array.from(new Set([...(Array.isArray(origin) ? origin : [origin]), ...extraAllowedOrigins]));
-
   const corsOptions: CorsOptions = {
-    origin: originList,
+    origin: origin === '*' ? '*' : [origin],
     methods: 'GET,HEAD,POST,PUT,PATCH,DELETE,OPTIONS',
     credentials: origin !== '*',
     allowedHeaders:
