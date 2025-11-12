@@ -34,9 +34,9 @@ async createCheckoutSession(
       line_items: [
         {
           price_data: {
-            currency: 'vnd',
+            currency: 'usd',
             product_data: { name: `Product ${productId}` },
-            unit_amount: Math.round(amount), 
+            unit_amount: Math.round(amount / 25000 * 100),
           },
           quantity,
         },
