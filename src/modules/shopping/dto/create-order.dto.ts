@@ -13,7 +13,8 @@ export class CreateOrderDto {
   @IsOptional()
   notes?: string;
 
-  @IsOptional()
+  @IsOptional() 
   @IsString()
   promotionCode?: string;
 }
+ 

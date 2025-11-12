@@ -4,6 +4,7 @@ import { ValidationPipe, VersioningType } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { CorsOptions } from '@nestjs/common/interfaces/external/cors-options.interface';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import { json, raw } from 'express';
 
 async function bootstrap() {
   // ==================================================
@@ -36,6 +37,17 @@ async function bootstrap() {
   SwaggerModule.setup('api/docs', app, document);
   console.log('📚 Swagger enabled at /api/docs');
   // =========  end: swagger config  ========= //
+
+
+  // =========  start: Stripe webhook raw body ========= //
+  // Stripe cần raw body để verify chữ ký:
+  // URL thực tế của webhook = /api/v{apiVersion}/payment-mobile/webhook
+  app.use(
+    `/api/v${apiVersion}/payment-mobile/webhook`,
+    raw({ type: 'application/json' }),
+  );
+  // Các route còn lại parse JSON bình thường
+  app.use(json({ limit: '5mb' }));
 
   // Allowlist for CORS: keep wildcard behavior when origin is '*',
   // otherwise allow the configured origin plus fresh-food.dev (http and https).

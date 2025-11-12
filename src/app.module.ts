@@ -21,6 +21,8 @@ import { OpenAIModule } from './modules/ai/ai.module';
 import { ReviewsController } from './modules/reviews/reviews.controller';
 import { ReviewsModule } from './modules/reviews/reviews.module';
 import { BannerModule } from './modules/banner/banner.module';
+import { PaymentMobileModule } from './modules/payment-mobile/payment-mobile.module';
+
 
 @Module({
   imports: [
@@ -38,6 +40,8 @@ import { BannerModule } from './modules/banner/banner.module';
     OpenAIModule,
     ReviewsModule,
     BannerModule,
+    PaymentMobileModule,
+ 
   ],
   controllers: [AppController, PromotionController, ReviewsController],
   providers: [
@@ -50,6 +54,7 @@ import { BannerModule } from './modules/banner/banner.module';
       provide: APP_INTERCEPTOR,
       useClass: TransformInterceptor,
     },
+
   ],
 })
 export class AppModule {}

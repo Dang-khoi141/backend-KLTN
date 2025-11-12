@@ -19,6 +19,9 @@ import { Warehouse } from '../../inventory/entities/warehouse.entity';
 
 @Injectable()
 export class OrderService {
+  updateStripeSession(orderId: string, id: any) {
+      throw new Error('Method not implemented.');
+  }
   constructor(
     @InjectRepository(Order) private readonly orderRepo: Repository<Order>,
     @InjectRepository(OrderItem)
