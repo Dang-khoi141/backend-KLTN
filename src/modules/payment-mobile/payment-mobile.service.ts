@@ -38,7 +38,7 @@ async createCheckoutSession(
 
     const stripeCurrency = 'vnd';
 
-    const baseUrl = 'https://rutilant-braden-painlessly.ngrok-free.dev';
+    const baseUrl = 'https://api.fresh-food.dev';
 
     const session = await this.stripe.checkout.sessions.create({
       line_items: [
