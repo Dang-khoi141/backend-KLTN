@@ -23,36 +23,49 @@ export class PaymentMobileService {
 
 
 async createCheckoutSession(
-  amount: number,
+  amount: number | string,
   currency: string,
   productId: string,
   quantity: number,
   orderId: string,
 ): Promise<{ url: string }> {
   try {
+    const cleanAmount = Number(String(amount).replace(/[.,]/g, ''));
+
+    if (isNaN(cleanAmount) || cleanAmount <= 0) {
+      throw new Error(`Invalid VND amount: ${amount}`);
+    }
+
+    const stripeCurrency = 'vnd';
+
+    const baseUrl = 'https://rutilant-braden-painlessly.ngrok-free.dev';
+
     const session = await this.stripe.checkout.sessions.create({
       line_items: [
         {
           price_data: {
-            currency: 'usd',
+            currency: stripeCurrency,
             product_data: { name: `Product ${productId}` },
-            unit_amount: Math.round(amount / 25000 * 100),
+            unit_amount: cleanAmount,
           },
           quantity,
         },
       ],
+
       mode: 'payment',
+
+      success_url: `${baseUrl}/payment-success?orderId=${orderId}&session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${baseUrl}/payment-cancel?orderId=${orderId}`,
       metadata: { orderId, productId },
     });
 
-    this.logger.log(`✅ Created Stripe session for order ${orderId}`);
     return { url: session.url! };
+
   } catch (error) {
-    this.logger.error('❌ Error creating Stripe session', error);
+    this.logger.error('❌ Error creating Stripe session:', error);
     throw new InternalServerErrorException('Failed to create checkout session');
   }
 }
-
 
   async handleWebhook(event: Stripe.Event) {
     try {
