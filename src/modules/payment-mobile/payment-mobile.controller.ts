@@ -59,7 +59,13 @@ export class PaymentMobileController {
     let event: Stripe.Event;
 
     try {
-      event = stripe.webhooks.constructEvent(req['rawBody'], signature, webhookSecret);
+      const payload = (req as any).body as Buffer;
+
+      event = stripe.webhooks.constructEvent(
+        payload,
+        signature,
+        webhookSecret,
+      );
     } catch (err: any) {
       console.error('⚠️ Webhook signature verification failed.', err.message);
       return res.status(400).send(`Webhook Error: ${err.message}`);
