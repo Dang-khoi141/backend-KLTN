@@ -49,9 +49,14 @@ export class OrderController {
   @Roles(UserRole.ADMIN, UserRole.SUPERADMIN)
   @Get('statistics')
   @ResponseMessage('Order statistics retrieved successfully')
-  getStatistics(@Query('period') period: 'day' | 'week' | 'month' = 'week') {
-    return this.orderService.getStatistics(period);
+  getStatistics(
+    @Query('period') period: 'day' | 'week' | 'month' = 'week',
+    @Query('offset') offset?: string,
+  ) {
+    const offsetNumber = Number(offset) || 0;
+    return this.orderService.getStatistics(period, offsetNumber);
   }
+
 
   @Get(':orderId')
   @Roles(UserRole.CUSTOMER)

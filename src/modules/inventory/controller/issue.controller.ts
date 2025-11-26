@@ -17,7 +17,7 @@ import { UserRole } from '../../user/enums/user-role.enum';
 
 @Controller('inventory/issues')
 @UseGuards(JwtAuthGuard, RolesGuard)
-@Roles(UserRole.SUPERADMIN, UserRole.ADMIN)
+@Roles(UserRole.STAFF_WAREHOUSE,UserRole.SUPERADMIN)
 export class IssueController {
   constructor(private readonly issueService: IssueService) {}
 
@@ -29,12 +29,14 @@ export class IssueController {
   }
 
   @Get()
+  @Roles(UserRole.SUPERADMIN, UserRole.ADMIN, UserRole.STAFF_WAREHOUSE)
   @ResponseMessage('Issues retrieved successfully')
   async findAll() {
     return this.issueService.findAll();
   }
 
   @Get(':id')
+  @Roles(UserRole.ADMIN, UserRole.SUPERADMIN, UserRole.STAFF_WAREHOUSE)
   @ResponseMessage('Issue retrieved successfully')
   async findOne(@Param('id') id: string) {
     return this.issueService.findOne(id);

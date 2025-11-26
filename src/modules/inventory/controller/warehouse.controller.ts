@@ -18,35 +18,33 @@ import { UserRole } from '../../user/enums/user-role.enum';
 
 @Controller('warehouses')
 @UseGuards(JwtAuthGuard, RolesGuard)
+@Roles(UserRole.STAFF_WAREHOUSE,UserRole.SUPERADMIN)
 export class WarehouseController {
   constructor(private readonly warehouseService: WarehouseService) {}
 
   @Post()
-  @Roles(UserRole.ADMIN, UserRole.SUPERADMIN)
   create(@Body() dto: CreateWarehouseDto) {
     return this.warehouseService.create(dto);
   }
 
   @Get()
-  @Roles(UserRole.ADMIN, UserRole.SUPERADMIN)
+  @Roles(UserRole.ADMIN, UserRole.SUPERADMIN, UserRole.STAFF_WAREHOUSE )
   findAll() {
     return this.warehouseService.findAll();
   }
 
   @Get(':id')
-  @Roles(UserRole.ADMIN, UserRole.SUPERADMIN)
+  @Roles(UserRole.ADMIN, UserRole.SUPERADMIN, UserRole.STAFF_WAREHOUSE )
   findOne(@Param('id') id: string) {
     return this.warehouseService.findOne(id);
   }
 
   @Patch(':id')
-  @Roles(UserRole.ADMIN, UserRole.SUPERADMIN)
   update(@Param('id') id: string, @Body() dto: UpdateWarehouseDto) {
     return this.warehouseService.update(id, dto);
   }
 
   @Delete(':id')
-  @Roles(UserRole.ADMIN, UserRole.SUPERADMIN)
   remove(@Param('id') id: string) {
     return this.warehouseService.remove(id);
   }

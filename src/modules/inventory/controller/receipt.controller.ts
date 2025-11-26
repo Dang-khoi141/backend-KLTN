@@ -17,7 +17,7 @@ import { UserRole } from '../../user/enums/user-role.enum';
 
 @Controller('inventory/receipts')
 @UseGuards(JwtAuthGuard, RolesGuard)
-@Roles(UserRole.SUPERADMIN, UserRole.ADMIN)
+@Roles(UserRole.STAFF_WAREHOUSE,UserRole.SUPERADMIN)
 export class ReceiptController {
   constructor(private readonly receiptService: ReceiptService) {}
 
@@ -29,12 +29,14 @@ export class ReceiptController {
   }
 
   @Get()
+  @Roles(UserRole.SUPERADMIN, UserRole.ADMIN, UserRole.STAFF_WAREHOUSE)
   @ResponseMessage('Receipts retrieved successfully')
   async findAll() {
     return this.receiptService.findAll();
   }
 
   @Get(':id')
+  @Roles(UserRole.ADMIN, UserRole.SUPERADMIN, UserRole.STAFF_WAREHOUSE)
   @ResponseMessage('Receipt retrieved successfully')
   async findOne(@Param('id') id: string) {
     return this.receiptService.findOne(id);

@@ -37,14 +37,18 @@ export class ProductService {
       dto.discountPercentage = 0;
     }
 
-    let category = await this.getDefaultCategory();
+    let category:Category;
     if (dto.categoryId) {
       category = await this.categoryService.findOne(dto.categoryId);
+    } else {
+      category = await this.getDefaultCategory();
     }
 
-    let brand = await this.getDefaultBrand();
+    let brand:Brand;
     if (dto.brandId) {
       brand = await this.brandService.findOne(dto.brandId);
+    }else {
+      brand = await this.getDefaultBrand();
     }
 
     const product = this.productRepository.create({

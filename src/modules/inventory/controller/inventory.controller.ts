@@ -20,23 +20,26 @@ import { UserRole } from '../../user/enums/user-role.enum';
 
 @Controller('inventory')
 @UseGuards(JwtAuthGuard, RolesGuard)
-@Roles(UserRole.SUPERADMIN, UserRole.ADMIN)
+@Roles(UserRole.STAFF_WAREHOUSE,UserRole.SUPERADMIN)
 export class InventoryController {
   constructor(private readonly inventoryService: InventoryService) {}
 
   @Get()
+  @Roles(UserRole.SUPERADMIN, UserRole.ADMIN,UserRole.STAFF_WAREHOUSE)
   @ResponseMessage('Inventory retrieved successfully')
   async getAll() {
     return this.inventoryService.getAllInventory();
   }
 
   @Get('low-stock')
+  @Roles(UserRole.ADMIN, UserRole.SUPERADMIN,UserRole.STAFF_WAREHOUSE)
   @ResponseMessage('Low stock products retrieved successfully')
   async getLowStock() {
     return this.inventoryService.getLowStockProducts();
   }
 
   @Get(':productId')
+  @Roles(UserRole.ADMIN, UserRole.SUPERADMIN,UserRole.STAFF_WAREHOUSE)
   @ResponseMessage('Product stock retrieved successfully')
   async getStock(@Param('productId') productId: string) {
     return this.inventoryService.getStock(productId);

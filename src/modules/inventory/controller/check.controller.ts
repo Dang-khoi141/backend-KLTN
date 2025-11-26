@@ -17,7 +17,7 @@ import { UserRole } from '../../user/enums/user-role.enum';
 
 @Controller('inventory/checks')
 @UseGuards(JwtAuthGuard, RolesGuard)
-@Roles(UserRole.ADMIN, UserRole.SUPERADMIN)
+@Roles(UserRole.STAFF_WAREHOUSE,UserRole.SUPERADMIN)
 export class CheckController {
   constructor(private readonly checkService: CheckService) {}
 
@@ -29,12 +29,14 @@ export class CheckController {
   }
 
   @Get()
+  @Roles(UserRole.ADMIN, UserRole.SUPERADMIN,UserRole.STAFF_WAREHOUSE)
   @ResponseMessage('Checks retrieved successfully')
   async findAll() {
     return this.checkService.findAll();
   }
 
   @Get(':id')
+  @Roles(UserRole.ADMIN, UserRole.SUPERADMIN,UserRole.STAFF_WAREHOUSE)
   @ResponseMessage('Check retrieved successfully')
   async findOne(@Param('id') id: string) {
     return this.checkService.findOne(id);
