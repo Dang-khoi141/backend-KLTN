@@ -13,11 +13,11 @@ on:
       registry:
         description: 'Docker provider'
         required: true
-        default: 'dang141'
+        default: 'dangkhoi141'
       service:
         description: 'Service name'
         required: true
-        default: 'freshfoodtech-freshfood'
+        default: 'fresh-food'
 
 env:
   CONFIGURATION: 'DEV'
